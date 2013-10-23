@@ -2,35 +2,7 @@
 <html>
 <head>
     <title>Conf2013 by GordonSmith</title>
-    <script>
-    	var hpccConfig = {
-        	ESPRoot: "/esp/files",
-        	LocalRoot: location.pathname.replace(/\/[^/]+$/, "")
-        }; 
-    	var LocalRootParts = hpccConfig.LocalRoot.split("/"); 
-    	hpccConfig.Wuid = LocalRootParts[this.LocalRootParts.length - 1];
-
-        //  Are we local debug mode?  ---
-    	if (hpccConfig.Wuid === "files") {
-    	    hpccConfig.ServerIP = "192.168.1.201";
-    	    hpccConfig.ESPRoot = "//" + hpccConfig.ServerIP + ":8010" + hpccConfig.ESPRoot;
-    	    hpccConfig.Wuid = "W20131018-065200";
-        }
-    	
-        var dojoConfig = {
-            async: true,
-            parseOnLoad: false,
-            ServerIP: hpccConfig.ServerIP,
-            packages: [
-            {
-                name: "js",
-                location: hpccConfig.LocalRoot + "/js"
-            }, {
-                name: "hpcc",
-                location: hpccConfig.ESPRoot + "/scripts"
-            }]
-        };
-    </script>
+    <script src="js/config.js"></script>
     <script src="http://192.168.1.201:8010/esp/files/dojo/dojo.js"></script>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/queue.v1.min.js"></script>

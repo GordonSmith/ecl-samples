@@ -1,0 +1,138 @@
+<!doctype html>
+<html>
+<head>
+    <title>Choropleth</title>
+    <style>
+        body {
+          font: 10px sans-serif;
+        }
+
+        .usa {
+            fill: none;
+            stroke: black;
+            stroke-width: 0.25;
+            stroke-linejoin: round;
+        }
+
+        .counties {
+          fill: none;
+        }
+
+        .states {
+          fill: none;
+          stroke: black;
+          stroke-width: 0.25;
+          stroke-linejoin: round;
+        }
+
+        .axis path,
+        .axis line {
+          fill: none;
+          stroke: darkgrey;
+          shape-rendering: crispEdges;
+        }
+
+        .bar {
+          fill: indianred;
+        }
+    </style>
+    <script src="js/config.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/dojo/1.9.1/dojo/dojo.js"></script>
+    <!--script src="http://192.168.1.201:8010/esp/files/dojo/dojo.js"></script-->
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.min.js"></script>
+    <script>
+        require([
+            "dojo/json",
+            "dojo/store/Memory",
+            "dojo/request/script",
+            "dojo/on",
+            "dojo/dom",
+
+            "hpcc/WsWorkunits",
+            "hpcc/ESPWorkunit",
+
+            "js/DojoD3Choropeth",
+            "js/DojoD3BarChart",
+            "js/DojoD3Tree",
+            "js/DojoD3Graph",
+
+            "dojo/domReady!"], function (JSON, Memory, script, on, dom,
+                WsWorkunits, ESPWorkunit,
+                d3Choropeth, DojoD3BarChart, d3Tree, d3Graph) {
+                var choro = new d3Choropeth({
+                    id: "county",
+                    value: "total"
+                });
+                choro.on("ready", function (evt) {
+                    choro.renderTo({
+                        domNode: "#cpleth",
+                        width: 1000
+                    });
+                });
+
+                var bar = new DojoD3BarChart({
+                    x: "recording_year",
+                    y: "total"
+                });
+                bar.renderTo({
+                    domNode: "#bar",
+                    width: 1000,
+                    height: 200
+                });
+
+                var dataStore = new Memory({ data: [] });
+                var displayYear = function (year) {
+                    choro.render(dataStore.query({
+                        recording_year: year
+                    }));
+                }
+
+                var wuStore = ESPWorkunit.CreateWUQueryStore();
+                wuStore.query({
+                    Jobname: "DataDrivenDocuments"
+                }).then(function (response) {
+                    if (response.length) {
+                        var wu = response[0];
+                        wu.fetchNamedResults(["jo_all"]).then(function (results) {
+                            dataStore = new Memory({ data: results.jo_all });
+                            //  Choropleth  ---
+                            on(dom.byId("selectYear"), "change", function (evt) {
+                                displayYear(dom.byId("selectYear").value);
+                            });
+                            choro.on("click", function (evt) {
+                                bar.render(dataStore.query({
+                                    county: evt.county
+                                }));
+                            });
+                            bar.on("click", function (evt) {
+                                dom.byId("selectYear").value = evt.recording_year;
+                                displayYear(evt.recording_year);
+                            });
+                        });
+                    }
+                });
+            });
+    </script>
+</head>
+<body class="claro">
+    <div style="float: right">
+        <div>
+            Year:  
+            <select id="selectYear">
+                <option value="2007">...</option>
+                <option value="2007">2007</option>
+                <option value="2008">2008</option>
+                <option value="2009">2009</option>
+                <option value="2010">2010</option>
+                <option value="2011">2011</option>
+                <option value="2012">2012</option>
+                <option value="2013">2013</option>
+            </select>
+        </div>
+    </div>
+    <div id="cpleth"></div>
+    <div id="bar"></div>
+</body>
+</html>

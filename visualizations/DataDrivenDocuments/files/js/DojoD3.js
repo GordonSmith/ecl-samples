@@ -4,31 +4,42 @@
 
 ], function (declare, lang) {
     return declare(null, {
-        delegateItem: function (item, mappings) {
+        constructor: function (mappings) {
+            this.mappings = mappings;
+            this.rmappings = {};
+            for (var key in mappings) {
+                this.rmappings[mappings[key]] = key;
+            }
+        },
+
+        delegateItem: function (item) {
             if (!item)
                 return item;
 
             var retVal = {};
-            for (var key in mappings) {
-                if (lang.exists(mappings[key], item)) {
-                    if (Object.prototype.toString.call(item[mappings[key]]) === '[object Array]') {
-                        retVal[key] = this.delegateArray(item[mappings[key]], mappings);
-                    } else if (!isNaN(parseFloat(item[mappings[key]]))) {
-                        retVal[key] = parseFloat(item[mappings[key]]);
+            for (var key in this.mappings) {
+                if (lang.exists(this.mappings[key], item)) {
+                    var val = item[this.mappings[key]];
+                    if (val == null) {
+                        retVal[key] = "";
+                    } else if (Object.prototype.toString.call(val) === '[object Array]') {
+                        retVal[key] = this.delegateArray(val);
+                    } else if (!isNaN(parseFloat(val))) {
+                        retVal[key] = parseFloat(val);
                     } else {
-                        retVal[key] = item[mappings[key]].trim();
+                        retVal[key] = val.trim();
                     }
                 }
             }
             return retVal;
         },
 
-        delegateArray: function (arr, mappings) {
+        delegateArray: function (arr) {
             if (!arr)
                 return arr;
 
             return arr.map(lang.hitch(this, function (item) {
-                return this.delegateItem(item, mappings);
+                return this.delegateItem(item);
             }));
         },
 
@@ -49,10 +60,11 @@
 
         createSvgG: function (_target) {
             this.mixinTarget(_target);
-            this.SvgG = d3.select(this.target.domNode).append("svg")
+            this.Svg = d3.select(this.target.domNode).append("svg")
                 .attr("width", this.target.width)
-                .attr("height", this.target.height).append("g")
+                .attr("height", this.target.height)
             ;
+            this.SvgG = this.Svg.append("g");
         }
     });
 });

@@ -2,11 +2,7 @@ import $.sampleData.Unemployement;
 import $.sampleData.Miserables;
 import $.lib;
 
-lib.DemoLinks(DATASET([{'index.html'}], lib.LinksRecord));
-
-output(Unemployement.UnempDataset, named('unemployement'));
-output(Miserables.VertexDataset, named('vertices'));
-output(Miserables.EdgeDataset, named('edges'));
+lib.DemoLinks(DATASET([{'index.html'}, {'Choropleth.html'}], lib.LinksRecord));
 
 r := RECORD
   string st;
@@ -21,5 +17,16 @@ r := RECORD
 
 d := dataset('~viz::deeds_stats2', r, CSV);
 
-d2 := sort(d(recording_year = '2010'), total)
-output(sort(d(recording_year = '2010'), total), {county, total}, named('jo'));
+//string year := '' : STORED('year');
+//resultSet := d(recording_year = year);
+//OUTPUT(resultset, named('jo_orig'));
+//output(d, named('jo_orig'));
+output(d(recording_year = '2012' or recording_year = '2013'), named('jo_2'));
+output(d, named('jo_all'));
+
+/*
+output(Unemployement.UnempDataset, named('unemployement'));
+output(Miserables.VertexDataset, named('vertices'));
+output(Miserables.EdgeDataset, named('edges'));
+*/
+
