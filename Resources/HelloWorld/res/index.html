@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+    <script src="/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body>
+    <div id="Results"></div>
+    <script>
+        require(["dojo/dom-construct", "hpcc/ESPResource", "dojo/domReady!"], function (domConstruct, ESPResource) {
+
+            //  Fetch Data  ---
+            ESPResource.call({
+                //  Query Params Go Here (ignored for WUs) ---
+            }).then(function(response) {
+                for(var i = 0; i < response.Messages.length; ++i) {
+                    domConstruct.create("li", {
+                        innerHTML: response.Messages[i].message
+                    }, "Results");
+                }
+            })
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+/* Any demo specific styling needed for this tutorial only */
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    font-size: 14px;
+    font-family: Calibri;
+    font-weight: 100;
+    background-color: #bcbec0;
+    /*background-image: linear-gradient(transparent 50%, rgba(255, 255, 255, 0.5) 25%);*/
+    background-size: 4px 4px;
+}
+
+#App {
+    height: 100%;
+}
+
+html, body, #AppBorderContainer {
+    width: 100%; height: 100%;
+    border: 0; padding: 0; margin: 0;
+}
+
+.claro .demoLayout .edgePanel {
+    background-color: #d0e9fc;
+}
+
+.claro .BorderHeader {
+    font-size: 26px;
+    font-weight: bold;
+    border: none;
+    text-align: left;
+    background-color: #ED1C24;
+    color: white;
+}
+
+.claro .EdgeHeader {
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    text-align: center;
+    background-color: #ED1C24;
+    color: white;
+}
+
+.claro .EdgeCenter {
+    border: none;
+    background-color: white;
+}
+
+.claro .EdgeFooter {
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    text-align: center;
+    background-color: rgb(143, 43, 140);
+    color: white;
+}
+
+.claro .EdgeFooter a:link {
+    color: white; 
+    text-decoration: underline; 
+}
+
+.claro .EdgeFooter a:visited {
+    color: white; 
+    text-decoration: underline; 
+}
+
+/*  Map Styles  */
+.claro .mapBackground {
+  fill: rgb(179, 226, 244);
+  pointer-events: all;
+}
+
+#AppCenter {
+    overflow: hidden;
+}
+
+#AppRHS{
+    width: 270px;
+    padding: 0px;
+}
+
+#AppMap{
+    width: 270px;
+    height: 200px;
+    padding: 0px;
+    overflow: hidden;
+}
+
+.threeD {
+    box-shadow: 0 2em 2em #333333;
+    margin: 18px;
+}
+
+#states {
+  fill: whitesmoke;
+}
+
+#states .active {
+  fill: #77b800;
+}
+
+#state-borders {
+  fill: none;
+  stroke: #6d6e71;
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/*  Bar Chart Styles  */
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.x.axis path {
+  display: none;
+}

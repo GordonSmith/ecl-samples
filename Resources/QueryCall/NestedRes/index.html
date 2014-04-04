@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+    <script src="/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body>
+    <label for="LNameInput">LName:  </label>
+    <input id=LNameInput value="TAYLOR"/>
+    <button id="LNameButton">Submit</button>
+    <h3>External Nested Calls (PtblQuery)</h3>
+    <div id="ExternalResultsDiv"></div>
+    <script>
+        require(["dojo/on", "dojo/dom", "dojo/dom-construct", "hpcc/ESPResource", "dojo/domReady!"], function (on, dom, domConstruct, ESPResource) {
+
+            var lnameInput = dom.byId("LNameInput");
+            var submitButton = dom.byId("LNameButton");
+            var externalResultsDiv = dom.byId("ExternalResultsDiv");
+
+            on(submitButton, "click", function(evt){
+                //  Remove Old Results  ---
+                domConstruct.empty(externalResultsDiv);
+
+                //  External Call  ---
+                ESPResource.callExt("hthor", "ptblquery", {
+                    lname: lnameInput.value
+                }).then(function(response) {
+                	//  Iterate over results  ---
+                    for(var i = 0; i < response.LNameResults.length; ++i) {
+
+                    	//  Nested Local Call  ---
+                        ESPResource.call({
+                            str1: response.LNameResults[i].lname,
+                            str2: response.LNameResults[i].fname
+                        }).then(function (response) {
+                        	
+                        	//  Display Results  ---
+                            domConstruct.create("li", {
+                                innerHTML: response["Result 1"][0].Result_1
+                            }, externalResultsDiv);
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
