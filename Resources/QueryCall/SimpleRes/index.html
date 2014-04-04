@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+    <script src="/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body>
+    <label for="Str1Input">String 1:  </label>
+    <input id="Str1Input" value="A" />
+    <label for="Str2Input">String 2:  </label>
+    <input id="Str2Input" value="B" />
+    <button id="SubmitButton">Submit</button>
+    <hr />
+    <label for="ResultInput">Result:  </label>
+    <input id="ResultInput" value="" />
+    <script>
+        require(["dojo/on", "dojo/dom", "dojo/dom-construct", "hpcc/ESPResource", "dojo/domReady!"], function (on, dom, domConstruct, ESPResource) {
+
+            var str1Input = dom.byId("Str1Input");
+            var str2Input = dom.byId("Str2Input");
+            var submitButton = dom.byId("SubmitButton");
+            var ResultInput = dom.byId("ResultInput");
+
+            on(submitButton, "click", function (evt) {
+                //  Fetch Data  ---
+                ESPResource.call({
+                    str1: Str1Input.value,
+                    str2: Str2Input.value
+                }).then(function (response) {
+                    ResultInput.value = response["Result 1"][0].Result_1;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

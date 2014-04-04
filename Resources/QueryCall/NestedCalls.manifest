@@ -1,0 +1,3 @@
+<Manifest>
+  <Resource filename="./NestedRes/*" recursive='1'/>
+</Manifest>

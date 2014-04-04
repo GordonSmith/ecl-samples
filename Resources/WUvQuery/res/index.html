@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WUvQuery</title>
+    <script src="/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body>
+    <h1 id="PageTitle"></h1>
+    <div id="Debug"></div>
+    <script>
+        require(["dojo/dom", "hpcc/ESPResource", "dojo/domReady!"], function (dom, ESPResource) {
+
+            //  Page Information  ---
+            var pageInfo = ESPResource.getPageInfo(); 
+            if (pageInfo.isWorkunit()) {
+                dom.byId("PageTitle").innerHTML = "Workunit:  " + pageInfo.wuid;
+            } else if (pageInfo.isQuery()) {
+                dom.byId("PageTitle").innerHTML = "Query:  " + pageInfo.queryQualifiedID;
+            }
+
+            pageInfo.showDebugInfo("Debug");
+        });
+    </script>
+</body>
+</html>
