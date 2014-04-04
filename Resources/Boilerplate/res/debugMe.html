@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Boilerplate</title>
+    <script>
+        var debugConfig = {
+            IP: "192.168.1.201",
+            Port: "8002",
+            pathname: "/WsEcl/res/query/hthor/boilerplate/res/index.html"
+        };
+    </script>
+    <script src="http://192.168.1.201:8002/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="http://192.168.1.201:8002/esp/files/dojo/dojo.js"></script>
+</head>
+<body>
+    <div id="App"></div>
+    <script>
+        require(["this/js/App", "dojo/domReady!"], function (App) {
+            var app = new App({}, "App");
+            app.main();
+        });
+    </script>
+</body>
+</html>

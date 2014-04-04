@@ -1,0 +1,4 @@
+<Manifest>
+  <Resource filename="res/index.html" />
+  <Resource filename="res/js/*" recursive='1'/>
+</Manifest>
