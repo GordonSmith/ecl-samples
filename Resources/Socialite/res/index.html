@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socialite</title>
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="/esp/files/dijit/themes/claro/claro.css" media="screen">
+    <link rel="stylesheet" href="css/style.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/dc.css"/>
+    <style>
+        .zoomLayer {
+            cursor: move;
+            fill: none;
+            stroke: red;
+            pointer-events: all;
+        }
+
+        .edge {
+            fill: none;
+            stroke: #666;
+            stroke-width: 0.75px;
+        }
+
+        .edge-active {
+            stroke-opacity: 1;
+            stroke-width: 2.0px;
+        }
+
+        .scaleVertex {
+            fill: #000;
+        }
+
+        .scaleVertex.category0 {
+            fill: #1f77b4;
+        }
+
+        .scaleVertex.category1 {
+            fill: #ff7f0e;
+        }
+
+        .scaleVertex.category2 {
+            fill: #2ca02c;
+        }
+
+        .scaleVertex.loading {
+            fill: red;
+        }
+
+        .icon {
+            pointer-events: none;
+        }
+
+        image path {
+            stroke: red;
+            fill: white;
+            color: green;
+        }
+
+        .label {
+            font: 11px sans-serif;
+            fill: black;
+            pointer-events: none;
+        }
+
+        .labelRect {
+            fill: #ffffff;
+            fill-opacity: .7;
+            stroke-width: 0px;
+            pointer-events: none;
+        }
+
+        .category0 .labelRect {
+            fill: #dcf1ff;
+            stroke: #1f77b4;
+        }
+
+        .category1 .labelRect {
+            fill: #ffe4cb;
+            stroke: #ff7f0e;
+        }
+
+        .category2 .labelRect {
+            fill: #d6ffd6;
+            stroke: #2ca02c;
+        }
+    </style>
+
+    <script src="/esp/files/eclwatch/dojoConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body class="claro">
+    <div id="App"></div>
+    <script>
+        require(["this/js/App", "dojo/domReady!"], function (App) {
+            var app = new App({}, "App");
+            app.startup();
+        });
+    </script>
+</body>
+</html>

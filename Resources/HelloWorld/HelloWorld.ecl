@@ -1,5 +1,3 @@
-//  Hello World  ---
-
 r := RECORD
   STRING20 message;
 END;

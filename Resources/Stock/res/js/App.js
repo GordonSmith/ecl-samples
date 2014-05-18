@@ -20,7 +20,6 @@ define([
     d3,
     tpl) {
 
-    var crossfilter = null;
     var dc = null;
 
     return declare([_Widget], {
@@ -59,48 +58,48 @@ define([
 
         postCreate: function (args) {
             this.inherited(arguments);
-            require(["dojo/text!hpcc/../crossfilter/crossfilter.js", "dojo/text!hpcc/../dc/dc.js", "dojo/text!hpcc/../dc/dc.css"], lang.hitch(this, function (crossfilterSrc, dcSrc, dcCss) {
+            require(["dojo/text!hpcc/../crossfilter/crossfilter.js"], lang.hitch(this, function (
+                     crossfilterSrc) {
                 eval(crossfilterSrc);
                 crossfilter = this.crossfilter;
-                eval(dcSrc);
-                this.postCreateLHS();
-                this.postCreateCenter();
-                this.postCreateBottom();
-                this.initCharts();
+                require(["dc/dc"], lang.hitch(this, function (
+                         _dc) {
+                    dc = _dc;
+                    this.postCreateLHS();
+                    this.postCreateCenter();
+                    this.postCreateBottom();
+                    this.initCharts();
 
-                return ESPResource.callExt("roxie", "fetch_ndx", {
-                    dummy: ""
-                }).then(lang.hitch(this, function (response) {
-                    /* since its a csv file we need to format the data a bit */
-                    this.dateFormat = d3.time.format("%m/%d/%Y");
-                    this.numberFormat = d3.format(".2f");
+                    ESPResource.callExt("roxie", "fetch_ndx", {
+                        dummy: ""
+                    }).then(lang.hitch(this, function (response) {
+                        /* since its a csv file we need to format the data a bit */
+                        this.dateFormat = d3.time.format("%m/%d/%Y");
+                        this.numberFormat = d3.format(".2f");
 
-                    response.ndx.forEach(function (e) {
-                        e.dd = this.dateFormat.parse(e.date);
-                        e.month = d3.time.month(e.dd); // pre-calculate month for better performance
-                    }, this);
-
-                    this.ndx.add(response.ndx);
-                    dc.renderAll();
+                        response.forEach(function (e) {
+                            e.dd = this.dateFormat.parse(e.date);
+                            e.month = d3.time.month(e.dd); // pre-calculate month for better performance
+                        }, this);
+                        this.ndx.add(response);
+                        dc.renderAll();
+                    }));
                 }));
             }));
         },
 
         postCreateLHS: function () {
-            var crossfilter = this.crossfilter;
             this.quarterChart = dc.pieChart("#quarter-chart");
             this.dayOfWeekChart = dc.rowChart("#day-of-week-chart");
             this.gainOrLossChart = dc.pieChart("#gain-loss-chart");
             this.fluctuationChart = dc.barChart("#fluctuation-chart");
         },
         postCreateCenter: function () {
-            var crossfilter = this.crossfilter;
             this.yearlyBubbleChart = dc.bubbleChart("#yearly-bubble-chart");
             this.moveChart = dc.compositeChart("#monthly-move-chart");
             this.volumeChart = dc.barChart("#monthly-volume-chart");
         },
         postCreateBottom: function () {
-            var crossfilter = this.crossfilter;
             this.dataTable = dc.dataTable(".dc-data-table");
         },
 
