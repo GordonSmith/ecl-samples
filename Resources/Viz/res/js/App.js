@@ -14,7 +14,7 @@ define([
     "hpcc/ECLPlaygroundResultsWidget",
 
     "d3/d3",
-    "./SpringViz",
+    "./ForceDirected",
     "./GMap",
     "./BarChart",
 
@@ -28,7 +28,7 @@ define([
 ], function (declare, lang, aspect, on, dom, domGeom,
     registry,
     _Widget, ESPResource, WsEcl, ECLPlaygroundResultsWidget,
-    d3, SpringViz, GMap, BarChart,
+    d3, ForceDirected, GMap, BarChart,
     tpl) {
 
     var dc = null;
@@ -116,7 +116,7 @@ define([
                         edges.push(item);
                     }
                 }
-                context.springViz.setData(vertices, edges, append, pos);
+                context.ForceDirected.setData(vertices, edges, append, pos);
                 return response;
             });
         },
@@ -174,7 +174,7 @@ define([
 
         initCenter: function () {
             this.centerSize = this.getSize(this.widget.Main.domNode);
-            this.springViz = new SpringViz("#" + this.id + "Main", this.centerSize.width, this.centerSize.height);
+            this.ForceDirected = new ForceDirected("#" + this.id + "Main", this.centerSize.width, this.centerSize.height);
 
             var vertexMeta = {
                 categoryIcon: [
@@ -183,14 +183,14 @@ define([
                     "img/people.svg"
                 ]
             };
-            this.springViz.setVertexMeta(vertexMeta);
+            this.ForceDirected.setVertexMeta(vertexMeta);
 
             var context = this;
             aspect.after(this.widget.Main, "resize", dojoConfig.debounce(function () {
                 context.centerSize = context.getSize(context.widget.Main.domNode);
-                context.springViz.resize(context.centerSize.width, context.centerSize.height);
+                context.ForceDirected.resize(context.centerSize.width, context.centerSize.height);
             }));
-            this.springViz.vertex_dblclick = function (vertex, self) {
+            this.ForceDirected.vertex_dblclick = function (vertex, self) {
                 var scaleVertex = d3.select(self).select(".scaleVertex");
                 scaleVertex.classed("loading", true);
                 context.fetchData(vertex.id, true, vertex).then(function (response) {
@@ -198,7 +198,7 @@ define([
                     scaleVertex.classed("loading", false);
                 });
             };
-            this.springViz.vertex_click = function (vertex, self) {
+            this.ForceDirected.vertex_click = function (vertex, self) {
                 var scaleVertex = d3.select(self).select(".scaleVertex");
                 scaleVertex.classed("loading", true);
                 context.fetchAddresses(vertex.id, false, vertex).then(function (response) {

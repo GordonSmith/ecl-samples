@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8 />
+    <link rel="stylesheet" type="text/css" href="css/test.css">
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.11/require.min.js"></script>
+    <script>
+        requirejs.config({
+            baseUrl: '.',
+            packages: [
+                "js",
+                {
+                    name: "d3",
+                    location: "http://d3js.org",
+                    main: "d3.v3.min"
+                }
+            ]
+        });
+    </script>
+    <script>
+        require(["js/SpringViz"], function (SpringViz) {
+            var vertices = [
+                { category: 0, id: 0, name: "Node 0" },
+                { category: 1, id: 1, name: "Node 1" },
+                { category: 1, id: 2, name: "Node 2" }
+            ];
+            var edges = [
+                { source: 0, target: 1, weight: 1 },
+                { source: 1, target: 2, weight: 1 },
+                { source: 2, target: 0, weight: 1 }
+            ];
+            var springViz = new SpringViz("#myBody", 500, 500);
+            springViz.setVertexMeta({
+                categoryIcon: [
+                    "img/people.svg",
+                    "img/people.svg",
+                    "img/people.svg"
+                ]
+            });
+            var uniqueID = vertices.length;
+            springViz.vertex_dblclick = function (vertex, self) {
+                setTimeout(function (id) {
+                    springViz.setData([
+                        { category: Math.floor((Math.random() * 3)), id: id, name: "Node " + uniqueID }
+                    ], [
+                        { source: vertex.id, target: id, weight: 1 },
+                        { source: id, target: Math.floor((Math.random() * id)), weight: 1 }
+                    ], true, vertex);
+                }, 800, uniqueID++);
+            };
+            springViz.setData(vertices, edges);
+        });
+    </script>
+</head>
+<body id="myBody">
+</body>
+</html>

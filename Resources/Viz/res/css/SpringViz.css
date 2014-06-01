@@ -11,30 +11,39 @@
     stroke-width: 0.75px;
 }
 
+marker {
+    fill: #666;
+    stroke: none;
+}
+
 .edge-active {
     stroke-opacity: 1;
     stroke-width: 2.0px;
 }
 
-.scaleVertex {
+.scaleVertex .shape {
     fill: #000;
 }
 
-    .scaleVertex.category0 {
-        fill: #1f77b4;
-    }
+.scaleVertex .icon {
+    fill: white;
+}
 
-    .scaleVertex.category1 {
-        fill: #ff7f0e;
-    }
+.scaleVertex.category0 .shape {
+    fill: #1f77b4;
+}
 
-    .scaleVertex.category2 {
-        fill: #2ca02c;
-    }
+.scaleVertex.category1 .shape {
+    fill: #ff7f0e;
+}
 
-    .scaleVertex.loading {
-        fill: red;
-    }
+.scaleVertex.category2 .shape {
+    fill: #2ca02c;
+}
+
+.scaleVertex.loading .shape {
+    fill: red;
+}
 
 .icon {
     pointer-events: none;
