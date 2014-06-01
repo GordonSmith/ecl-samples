@@ -1,0 +1,34 @@
+#map {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.stations, .stations svg {
+  position: absolute;
+}
+
+.stations svg {
+  font: 10px sans-serif;
+}
+
+.stations circle {
+  fill: navy;
+  stroke: none;
+}
+
+.stations .first {
+  fill: green;
+}
+
+.stations .last {
+  fill: red;
+}
+
+.stations .firstlast {
+  fill: orange;
+}
+
+.gm-style img { max-width: none; }
+.gm-style label { width: auto; display: inline; }
