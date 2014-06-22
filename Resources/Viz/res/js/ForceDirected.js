@@ -95,6 +95,8 @@
         this._updateEdges();
         this._updateVertices();
         this.force.start();
+        //for (var i = 20; i > 0; --i) this.force.tick();
+        //this.force.stop();
     };
 
     ForceDirected.prototype._updateEdges = function () {

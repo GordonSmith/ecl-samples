@@ -17,6 +17,7 @@ define([
     "./ForceDirected",
     "./GMap",
     "./BarChart",
+    "./Grid",
 
     "dojo/text!./tpl/App.html",
 
@@ -28,7 +29,7 @@ define([
 ], function (declare, lang, aspect, on, dom, domGeom,
     registry,
     _Widget, ESPResource, WsEcl, ECLPlaygroundResultsWidget,
-    d3, ForceDirected, GMap, BarChart,
+    d3, ForceDirected, GMap, BarChart, Grid,
     tpl) {
 
     var dc = null;
@@ -76,6 +77,9 @@ define([
                 context.gMap.setData(context.addresses, context.migrations);
                 context.dateChart.setData(context.addresses);
             });
+            this.fetchData2(lexId, false).then(function (response) {
+                context.grid.setData(response);
+            });
         },
 
         getSize: function (node) {
@@ -118,6 +122,20 @@ define([
                 }
                 context.ForceDirected.setData(vertices, edges, append, pos);
                 return response;
+            });
+        },
+
+        fetchData2: function (id, append, pos) {
+            var context = this;
+            var service = lang.mixin({
+                getURL: function () {
+                    return "http://" + this.ip + ":" + this.port + "/WsEcl/submit/query/" + this.server + "/" + this.action2 + "/json";
+                }
+            }, this.urlParams);
+            return WsEcl.CallURL(service.getURL(), {
+                cluster_id: id
+            }).then(function (response) {
+                return response.Result_1 ? response.Result_1 : [];
             });
         },
 
@@ -206,9 +224,20 @@ define([
                     context.gMap.setData(context.addresses, context.migrations);
                     context.dateChart.setData(context.addresses);
                 });
+                context.fetchData2(vertex.id, false).then(function (response) {
+                    context.grid.setData(response);
+                });
             };
         },
         initFooter: function () {
+            this.FooterSize = this.getSize(this.widget.Footer.domNode);
+            this.grid = new Grid(this.id + "FooterGrid", this.FooterSize.width, this.FooterSize.height);
+
+            var context = this;
+            aspect.after(registry.byId(context.id + "Footer"), "resize", dojoConfig.debounce(function () {
+                context.FooterSize = context.getSize(context.widget.LHSMain.domNode);
+                context.grid.resize(context.FooterSize.width, context.FooterSize.height);
+            }));
         },
         initLHSMain: function () {
             this.LHSMainSize = this.getSize(this.widget.LHSMain.domNode);
