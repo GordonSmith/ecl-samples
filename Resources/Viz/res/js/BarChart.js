@@ -81,7 +81,7 @@
     };
 
 
-    BarChart.prototype.setData = function (data, append, pos) {
+    BarChart.prototype.setData = function (data, append) {
         if (!append) {
             this.data.length = 0;
         }
