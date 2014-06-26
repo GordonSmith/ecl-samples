@@ -9,7 +9,7 @@
     };
 
     //  Inputs  ---
-    BarChartBase.prototype.setData = function (vertices, edges, append) {
+    BarChartBase.prototype.setData = function (data, append) {
         console.log("setData");
     };
 
