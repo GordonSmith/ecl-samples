@@ -17,9 +17,19 @@ rect {
     display: none;
 }
 
+.brush rect.background {
+    z-index: -999;
+}
+
 .brush .extent {
-  stroke: #fff;
+  stroke:none;
+  fill: steelblue;
   fill-opacity: .125;
   shape-rendering: crispEdges;
+}
+
+.brush .resize path {
+    fill: #eee;
+    stroke: #666;
 }
 

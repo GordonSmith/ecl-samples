@@ -37,17 +37,33 @@
             context.newSelection(d[0], d[1]);
         }
 
+        this.resizeBrushHandle = function(d) {
+            var e = +(d == "e"), x = e ? 1 : -1, y = (context.height - context.margin.bottom) / 3;
+            return "M" + (0.5 * x) + "," + y
+                + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
+                + "V" + (2 * y - 6)
+                + "A6,6 0 0 " + e + " " + (0.5 * x) + "," + (2 * y)
+                + "Z"
+                + "M" + (2.5 * x) + "," + (y + 8)
+                + "V" + (2 * y - 8)
+                + "M" + (4.5 * x) + "," + (y + 8)
+                + "V" + (2 * y - 8);
+        };
+
         //  SVG  ---
         this._svg = d3.select(target).append("svg")
             .attr("width", this.width)
             .attr("height", this.height)
         ;
-        this._svg.append("g")
+        var brush = this._svg.append("g")
             .attr("class", "x brush")
-            .call(this.brush)
-        .selectAll("rect")
+            .call(this.brush);
+        brush.selectAll("rect")
             //.attr("y", +1)
             .attr("height", this.height - this.margin.bottom)
+        ;
+        brush.selectAll(".resize").append("path")
+            .attr("d", this.resizeBrushHandle)
         ;
         this.svg = this._svg.append("g");
         this.xaxis = this._svg.append("g")
@@ -71,9 +87,14 @@
                 .attr("width", this.width)
                 .attr("height", this.height)
             ;
-            this._svg.select(".brush").selectAll("rect")
+            var brush = this._svg.select(".brush");
+            brush.selectAll("rect")
                 .attr("height", this.height - this.margin.bottom)
             ;
+            brush.selectAll(".resize").select("path")
+                .attr("d", this.resizeBrushHandle)
+            ;
+
             this.x.range([this.margin.left, this.width - this.margin.left - this.margin.right]);
             this.y.range([this.height - this.margin.bottom, 0]);
             this._update();
