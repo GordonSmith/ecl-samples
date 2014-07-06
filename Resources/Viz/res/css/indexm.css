@@ -1,0 +1,59 @@
+/* Any demo specific styling needed for this tutorial only */
+html, body {
+    background: white;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    color: rgb(51, 51, 51);
+    font-family: Lucida Sans,Lucida Grande,Arial !important;
+    font-size: 13px !important;
+    padding: 0;
+}
+
+#App {
+    height: 100%;
+}
+
+#AppMain {
+    overflow: hidden;
+}
+
+.zoomLayer {
+    cursor: move;
+    fill: none;
+    stroke: red;
+    pointer-events: all;
+}
+
+.node {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.0px;
+}
+
+.edge {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.0px;
+}
+
+.marker{
+    fill: #666;
+    stroke: none;
+    stroke-width: 1.0px;
+}
+
+.label {
+    font: 13px sans-serif;
+    fill: #666;
+    stroke: none;
+    pointer-events: none;
+}
+
+
+/*
+html, body, #AppBorderContainer {
+    width: 100%; height: 100%;
+    border: 0; padding: 0; margin: 0;
+}
+*/

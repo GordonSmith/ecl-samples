@@ -1,0 +1,17 @@
+<div class="${baseClass}">
+    <div id="${id}BorderContainer" style="width: 100%; height: 100%" data-dojo-props="design: 'headline'" data-dojo-type="dijit.layout.BorderContainer">
+        <div id="${id}Heading" class="topPanel" data-dojo-props="region: 'top'" data-dojo-type="dijit.layout.ContentPane">
+            <span id="${id}Title" style="font-weight: bold; font-size: x-large">Marshal Playground</span>
+        </div>
+        <div id="${id}LHS" class="EdgeLeft" style="width: 30%;padding:0;overflow:hidden" data-dojo-props="region: 'left', splitter: true" data-dojo-type="dijit.layout.BorderContainer">
+            <div id="${id}LHSCenter" style="padding:0;overflow:hidden" data-dojo-props="region: 'center', splitter: true" data-dojo-type="dijit.layout.ContentPane">
+                <textarea id="${id}MarshalJS" style="width:100%; height: 100%;border:none" data-dojo-attach-event="onChange:_onChangeJS" data-dojo-props="intermediateChanges:true" data-dojo-type="dijit.form.SimpleTextarea">[{"id":"Ins3","Visualizations":[{"id":"RecordDensity","onSelect":{"updates":{"visualization":"Donut1","instance":"Ins3","datasource":"stats"},"mappings":{"clean_st":"clean_st"}},"source":{"name":"stats","mappings":{"STATE":"clean_st","WEIGHT":"Cnt"},"output":"View_RecordDensity"},"COLOR":"Red-Yellow-Blue","type":"CHORO"},{"id":"Donut1","source":{"name":"stats","mappings":{"WEIGHT":"Cnt","LABEL":"clean_error"},"output":"View_Donut1"},"type":"PIE"},{"id":"ErrorDensity","source":{"name":"stats","mappings":{"STATE":"clean_st","WEIGHT":"Cnt"},"output":"View_ErrorDensity"},"COLOR":"Red-Yellow-Blue","type":"CHORO"},{"id":"ErrorTypes","onSelect":{"updates":{"visualization":"ErrorDensity","instance":"Ins3","datasource":"stats"},"mappings":{"clean_error":"clean_error"}},"source":{"name":"stats","mappings":{"WEIGHT":"Cnt","LABEL":"clean_error"},"output":"View_ErrorTypes"},"type":"PIE"}],"DataSources":[{"id":"stats","outputs":[{"id":"View_RecordDensity","notify":["RecordDensity"]},{"id":"View_Donut1","notify":["Donut1"]},{"id":"View_ErrorDensity","notify":["ErrorDensity"]},{"id":"View_ErrorTypes","notify":["ErrorTypes"]}],"URL":"_roxiebase_/stats_Service","filter":["clean_error","clean_st"]}]}]</textarea>
+            </div>
+            <div id="${id}LHSFooter" style="height:80%;padding:1px;overflow:hidden" data-dojo-props="region: 'bottom', splitter: true" data-dojo-type="dijit.layout.ContentPane">
+                <textarea id="${id}MarshalPP" wrap="off" style="width:100%; height: 100%;border:none" data-dojo-attach-event="onChange:_onChangePP" data-dojo-type="dijit.form.SimpleTextarea"></textarea>
+            </div>
+        </div>
+        <div id="${id}Main" data-dojo-props="region: 'center'" data-dojo-type="dijit.layout.TabContainer">
+        </div>
+    </div>
+</div>

@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Marshal</title>
+    <link rel="stylesheet" href="/esp/files/dojo/resources/dojo.css" media="screen">
+    <link rel="stylesheet" href="/esp/files/dijit/themes/claro/claro.css" media="screen">
+    <link rel="stylesheet" href="css/indexm.css" media="screen">
+
+    <script src="js/marshalConfig.js"></script>
+    <script src="/esp/files/dojo/dojo.js"></script>
+</head>
+<body class="claro">
+    <div id="App"></div>
+    <script>
+        require(["js/marshal", "dojo/domReady!"], function (App) {
+            var app = new App({}, "App");
+            app.startup();
+        });
+    </script>
+</body>
+</html>
