@@ -1,24 +1,12 @@
 .zoomLayer {
-    cursor: move;
     fill: none;
     stroke: red;
     pointer-events: all;
 }
 
-.edge {
-    fill: none;
-    stroke: #666;
-    stroke-width: 0.75px;
-}
-
-marker {
+.marker{
     fill: #666;
     stroke: none;
-}
-
-.edge-active {
-    stroke-opacity: 1;
-    stroke-width: 2.0px;
 }
 
 .scaleVertex .shape {
@@ -45,27 +33,24 @@ marker {
     fill: red;
 }
 
-.icon {
-    pointer-events: none;
-}
-
 image path {
     stroke: red;
     fill: white;
     color: green;
 }
 
-.label {
-    font: 11px sans-serif;
+.vertex {
+    pointer-events: all;
+}
+
+.vertexLabel {
     fill: black;
-    pointer-events: none;
 }
 
 .labelRect {
     fill: #ffffff;
     fill-opacity: .7;
     stroke-width: 0px;
-    pointer-events: none;
 }
 
 .category0 .labelRect {
@@ -82,3 +67,25 @@ image path {
     fill: #d6ffd6;
     stroke: #2ca02c;
 }
+
+.edge {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.0px;
+}
+
+.edgeLabel rect {
+    fill: white;
+    stroke: none;
+}
+
+.edgeLabel text {
+    fill: black;
+    stroke: none;
+}
+
+.edge-active {
+    stroke: black;
+    stroke-width: 1.1px;
+}
+

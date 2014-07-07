@@ -5,6 +5,7 @@ define([
     "dojo/on",
     "dojo/dom",
     "dojo/dom-geometry",
+    "dojo/has",
 
     "dijit/registry",
 
@@ -14,7 +15,7 @@ define([
     "hpcc/ECLPlaygroundResultsWidget",
 
     "d3/d3",
-    "./ForceDirected",
+    "./Graph",
     "./GMap",
     "./BarChart",
     "./Grid",
@@ -26,13 +27,27 @@ define([
     "dijit/layout/ContentPane",
     "dijit/form/TextBox"
 
-], function (declare, lang, aspect, on, dom, domGeom,
+], function (declare, lang, aspect, on, dom, domGeom, has,
     registry,
     _Widget, ESPResource, WsEcl, ECLPlaygroundResultsWidget,
-    d3, ForceDirected, GMap, BarChart, Grid,
+    d3, Graph, GMap, BarChart, Grid,
     tpl) {
 
-    var dc = null;
+    debounce = function (func, threshold, execAsap) {
+        return function debounced() {
+            var obj = this, args = arguments;
+            function delayed() {
+                if (!execAsap)
+                    func.apply(obj, args);
+                obj.timeout = null;
+            };
+            if (obj.timeout)
+                clearTimeout(obj.timeout);
+            else if (execAsap)
+                func.apply(obj, args);
+            obj.timeout = setTimeout(delayed, threshold || 100);
+        }
+    };
 
     return declare([_Widget], {
         templateString: tpl,
@@ -47,7 +62,10 @@ define([
             this.postCreateLHSMain();
             this.postCreateCenter();
             this.postCreateBottom();
-            this.urlParams = dojo.queryToObject(dojoConfig.urlInfo.params);
+
+            var searchNodes = location.search.split("?");
+            var params = searchNodes.length >= 2 ? searchNodes[1] : "";
+            this.urlParams = dojo.queryToObject(params);
         },
 
         postCreateLHSMain: function () {},
@@ -81,6 +99,18 @@ define([
                 context.grid.setData(response);
             });
         },
+        _onCircle: function (evt) {
+            this.graph.layoutCircle();
+        },
+        _onForceDirected: function (evt) {
+            this.graph.layoutForceDirected();
+        },
+        _onForceDirected2: function (evt) {
+            this.graph.layoutForceDirected2();
+        },
+        _onHierarchy: function (evt) {
+            this.graph.layoutHierarchy();
+        },
 
         getSize: function (node) {
             var pos = domGeom.position(node);
@@ -106,7 +136,11 @@ define([
                 var edges = [];
                 for (var i = 0; i < response.nodes.length; ++i) {
                     var item = response.nodes[i];
+                    item.label = item.name;
                     item.category = item.group;
+                    item.__viz = {
+                        icon: "\uf007"
+                    };
                     delete item.group;
                     vertexCache[item.nodeid] = item;
                     vertices.push(item);
@@ -115,12 +149,16 @@ define([
                     var item = response.links[i];
                     item.source = vertexCache[item.source].id;
                     item.target = vertexCache[item.target].id;
+                    item.id = item.source + "_" + item.target;
                     item.weight = 1;
+                    item.__viz = {
+                        header: "arrowHead"
+                    };
                     if (item.source !== item.target) {
                         edges.push(item);
                     }
                 }
-                context.ForceDirected.setData(vertices, edges, append, pos);
+                context.graph.setData(vertices, edges, append, pos);
                 return response;
             });
         },
@@ -192,7 +230,8 @@ define([
 
         initCenter: function () {
             this.centerSize = this.getSize(this.widget.Main.domNode);
-            this.ForceDirected = new ForceDirected("#" + this.id + "Main", this.centerSize.width, this.centerSize.height);
+            this.graph = new Graph("#" + this.id + "Main", this.centerSize.width, this.centerSize.height, has("ie") || has("trident"));
+            this.graph.layoutForceDirected2();
 
             var vertexMeta = {
                 categoryIcon: [
@@ -201,26 +240,28 @@ define([
                     "img/people.svg"
                 ]
             };
-            this.ForceDirected.setVertexMeta(vertexMeta);
+            //this.graph.setVertexMeta(vertexMeta);
 
             var context = this;
-            aspect.after(this.widget.Main, "resize", dojoConfig.debounce(function () {
+            aspect.after(this.widget.Main, "resize", debounce(function () {
                 context.centerSize = context.getSize(context.widget.Main.domNode);
-                context.ForceDirected.resize(context.centerSize.width, context.centerSize.height);
+                context.graph.resize(context.centerSize.width, context.centerSize.height);
             }));
-            this.ForceDirected.vertex_dblclick = function (vertex, self) {
-                var scaleVertex = d3.select(self).select(".scaleVertex");
-                scaleVertex.classed("loading", true);
+            this.graph.vertex_dblclick = function (element, vertex) {
+                //var scaleVertex = element.select(".scaleVertex");
+                //scaleVertex.classed("loading", true);
                 context.fetchData(vertex.id, true, vertex).then(function (response) {
-                    scaleVertex.select(".icon").attr("xlink:href", "img/person.svg");
-                    scaleVertex.classed("loading", false);
+                    //scaleVertex.select(".icon").attr("xlink:href", "img/person.svg");
+                    //scaleVertex.classed("loading", false);
                 });
             };
-            this.ForceDirected.vertex_click = function (vertex, self) {
-                var scaleVertex = d3.select(self).select(".scaleVertex");
-                scaleVertex.classed("loading", true);
+            this.graph.vertex_click = function (element, vertex) {
+                Graph.prototype.vertex_click.call(this, element, vertex);
+
+                //var scaleVertex = element.select(".scaleVertex");
+                //scaleVertex.classed("loading", true);
                 context.fetchAddresses(vertex.id, false, vertex).then(function (response) {
-                    scaleVertex.classed("loading", false);
+                    //scaleVertex.classed("loading", false);
                     context.gMap.setData(context.addresses, context.migrations);
                     context.dateChart.setData(context.addresses);
                 });
@@ -234,7 +275,7 @@ define([
             this.grid = new Grid(this.id + "FooterGrid", this.FooterSize.width, this.FooterSize.height);
 
             var context = this;
-            aspect.after(registry.byId(context.id + "Footer"), "resize", dojoConfig.debounce(function () {
+            aspect.after(registry.byId(context.id + "Footer"), "resize", debounce(function () {
                 context.FooterSize = context.getSize(context.widget.LHSMain.domNode);
                 context.grid.resize(context.FooterSize.width, context.FooterSize.height);
             }));
@@ -244,7 +285,7 @@ define([
             this.gMap = new GMap("#" + this.id + "LHSMain", this.LHSMainSize.width, this.LHSMainSize.height);
 
             var context = this;
-            aspect.after(registry.byId(context.id + "LHSMain"), "resize", dojoConfig.debounce(function () {
+            aspect.after(registry.byId(context.id + "LHSMain"), "resize", debounce(function () {
                 context.LHSMainSize = context.getSize(context.widget.LHSMain.domNode);
                 context.gMap.resize(context.LHSMainSize.width, context.LHSMainSize.height);
             }));
@@ -254,12 +295,12 @@ define([
             this.dateChart = new BarChart("#" + this.id + "LHSFooter", this.LHSFooterSize.width, this.LHSFooterSize.height);
 
             var context = this;
-            aspect.after(registry.byId(context.id + "LHSFooter"), "resize", dojoConfig.debounce(function () {
+            aspect.after(registry.byId(context.id + "LHSFooter"), "resize", debounce(function () {
                 context.LHSFooterSize = context.getSize(context.widget.LHSFooter.domNode);
                 context.dateChart.resize(context.LHSFooterSize.width, context.LHSFooterSize.height);
             }));
 
-            this.dateChart.newSelection = dojoConfig.debounce(function (from, to) {
+            this.dateChart.newSelection = debounce(function (from, to) {
                 inRange = function (from, to, address) {
                     var fromMonths = from.getFullYear() * 12 + from.getMonth() + 1;
                     var toMonths = to.getFullYear() * 12 + to.getMonth() + 1;

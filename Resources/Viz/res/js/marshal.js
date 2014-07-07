@@ -5,6 +5,7 @@ define([
     "dojo/json",
     "dojo/dom-geometry",
     "dojo/aspect",
+    "dojo/has",
 
     "dijit/registry",
     "dijit/layout/ContentPane",
@@ -14,6 +15,7 @@ define([
     "hpcc/WsEcl",
 
     "js/Graph",
+    "js/Entity",
 
     "dojo/text!./tpl/marshal.html",
 
@@ -21,10 +23,10 @@ define([
     "dijit/layout/TabContainer",
     "dijit/form/SimpleTextarea"
 
-], function (declare, lang, arrayUtil, JSON, domGeom, aspect,
+], function (declare, lang, arrayUtil, JSON, domGeom, aspect, has,
     registry, ContentPane,
     _Widget, ESPResource, WsEcl,
-    Graph,
+    Graph, Entity,
     tpl) {
 
     var debounce = function (func, threshold, execAsap) {
@@ -69,52 +71,39 @@ define([
             var d = 0;
         },
 
-        gatherNodes: function (nodes) {
+        accept: function(visitor) {
+            visitor.visit(this);
             for (var key in this.dashboards) {
-                this.dashboards[key].gatherNodes(nodes);
+                this.dashboards[key].accept(visitor);
             }
-        },
-
-        gatherEdges: function (edges) {
-        for (var key in this.dashboards) {
-            this.dashboards[key].gatherEdges(edges);
         }
-    }
-});
+    });
 
     var Dashboard = declare(null, {
         constructor: function (marshaller, args) {
             this.marshaller = marshaller;
             declare.safeMixin(this, args);
 
-            this.dataSources = {};
-            arrayUtil.forEach(this.DataSources, function (item, idx) {
-                this.dataSources[item.id] = new DataSource(this, item);
+            var DataSources = {};
+            arrayUtil.forEach(this.datasources, function (item, idx) {
+                DataSources[item.id] = new DataSource(this, item);
             }, this);
-            delete this.DataSources;
+            this.DataSources = DataSources;
 
-            this.visualisations = {};
-            arrayUtil.forEach(this.Visualizations, function (item, idx) {
-                this.visualisations[item.id] = new Visualization(this, item);
+            var Visualizations = {};
+            arrayUtil.forEach(this.visualizations, function (item, idx) {
+                Visualizations[item.id] = new Visualization(this, item);
             }, this);
-            delete this.Visualizations;
+            this.Visualizations = Visualizations;
         },
 
-        gatherNodes: function (nodes) {
-            for (var key in this.dataSources) {
-                this.dataSources[key].gatherNodes(nodes);
+        accept: function (visitor) {
+            visitor.visit(this);
+            for (var key in this.DataSources) {
+                this.DataSources[key].accept(visitor);
             }
-            for (var key in this.visualisations) {
-                this.visualisations[key].gatherNodes(nodes);
-            }
-        },
-
-        gatherEdges: function (edges) {
-            for (var key in this.dataSources) {
-                this.dataSources[key].gatherEdges(edges);
-            }
-            for (var key in this.visualisations) {
-                this.visualisations[key].gatherEdges(edges);
+            for (var key in this.Visualizations) {
+                this.Visualizations[key].accept(visitor);
             }
         }
     });
@@ -123,31 +112,29 @@ define([
         constructor: function (dashboard, args) {
             this.dashboard = dashboard;
             declare.safeMixin(this, args);
+            var outputs = {};
+            arrayUtil.forEach(this.outputs, function (item, idx) {
+                outputs[item.id] = new Output(this, item);
+            }, this);
+            this.outputs = outputs;
         },
 
-        gatherNodes: function (nodes) {
-            nodes.push(lang.mixin({
-                label: this.id
-            }, this));
-            arrayUtil.forEach(this.outputs, function (item, idx) {
-                var d = nodes.push(lang.mixin({}, item, {
-                    id: this.id + "." + item.id,
-                    label: item.id
-                }));
-                var d2 = 0;
-            }, this);
+        accept: function (visitor) {
+            visitor.visit(this);
+            for (var key in this.outputs) {
+                this.outputs[key].accept(visitor);
+            }
+        }
+    });
+
+    var Output = declare(null, {
+        constructor: function (dataSource, args) {
+            this.dataSource = dataSource;
+            declare.safeMixin(this, args);
         },
 
-        gatherEdges: function (edges) {
-            arrayUtil.forEach(this.outputs, function (item, idx) {
-                edges.push(lang.mixin({}, item, {
-                    id: this.id + "." + item.id,
-                    source: this.id,
-                    target: this.id + "." + item.id,
-                    __viz: {
-                    }
-                }));
-            }, this);
+        accept: function (visitor) {
+            visitor.visit(this);
         }
     });
 
@@ -156,31 +143,9 @@ define([
             this.dashboard = dashboard;
             declare.safeMixin(this, args);
         },
-        gatherNodes: function (nodes) {
-            nodes.push(lang.mixin({
-                label: this.id + "\n[" + this.type + "]"
-            }, this));
-        },
 
-        gatherEdges: function (edges) {
-            if (lang.exists("source.name", this)) {
-                edges.push({
-                    source: this.source.name + "." + this.source.output,
-                    target: this.id,
-                    type: "source",
-                    __viz: {
-                        footer: "circleFoot",
-                        header: "circleHead"
-                    }
-                });
-            }
-            if (lang.exists("onSelect.updates.visualization", this)) {
-                edges.push({
-                    source: this.id, target: this.onSelect.updates.visualization, __viz: {
-                        header: "arrowHead"
-                    }
-                });
-            }
+        accept: function (visitor) {
+            visitor.visit(this);
         }
     });
 
@@ -204,7 +169,7 @@ define([
 
         startup: function () {
             this.inherited(arguments);
-            //this.initCenter();
+            this.initCenter();
             this._onChangeJS(this.jsJson.get("value"));
         },
 
@@ -217,36 +182,44 @@ define([
             };
         },
 
-        initTab: function (tab, nodes, edges) {
-            var size = this.getSize(tab.domNode);
-            var graph = new Graph("#" + tab.id, size.width, size.height);
+        initCenter: function() {
+            this.entity = new Entity("entity", "vertexLabel");
+
+            var size = this.getSize(this.widget.Main.domNode);
+            this.graph = new Graph(this.widget.Main.id, size.width, size.height, has("ie") || has("trident"));
+            this.graph.layoutHierarchy();
 
             var context = this;
-            aspect.after(tab, "resize", debounce(function () {
-                var size = context.getSize(tab.domNode);
-                graph.resize(size.width, size.height);
+            this.graph.vertex_click = function(element, d) {
+                Graph.prototype.vertex_click.call(this, element, d);
+                context.entity
+                    .data(d)
+                    .render()
+                ;
+                context.entity._svg.select(".vertexLabel").attr("transform", "translate(" + [200 / 2, 200 / 2] + ")");
+            }
+
+            aspect.after(this.widget.Main, "resize", debounce(function () {
+                var size = context.getSize(context.widget.Main.domNode);
+                context.graph.resize(size.width, size.height);
             }));
 
-            graph.setData(nodes, edges);
-
-            //this.Graph.setData([
-            //    { id: "kspacey", label: "Kevin Spacey"},
-            //    { id: "swilliams", label: "Saul Williams"},
-            //    { id: "bpitt", label: "Brad Pitt"},
-            //    { id: "hford", label: "Harrison Ford"},
-            //    { id: "lwilson", label: "Luke Wilson"},
-            //    { id: "kbacon", label: "Kevin Bacon"}
-            //], [
-            //      { source: "kspacey", target: "kbacon" },
-            //      { source: "kspacey", target: "swilliams" },
-            //      { source: "swilliams", target: "kbacon" },
-            //      { source: "bpitt", target: "kbacon" },
-            //      { source: "hford", target: "lwilson" },
-            //      { source: "lwilson", target: "kbacon" }
-            //]);
         },
 
         //  ---
+        _onCircle: function (evt) {
+            this.graph.layoutCircle();
+        },
+        _onForceDirected: function (evt) {
+            this.graph.layoutForceDirected();
+        },
+        _onForceDirected2: function (evt) {
+            this.graph.layoutForceDirected2();
+        },
+        _onHierarchy: function (evt) {
+            this.graph.layoutHierarchy();
+        },
+        
         _onChangeJS: function (newValue) {
             var parser = new Parser(newValue);
             this.ppJson.set("value", parser.prettyJson);
@@ -268,19 +241,86 @@ define([
 
             if (dashboards) {
                 var marshaller = new Marshaller(dashboards);
-                arrayUtil.forEach(dashboards, function (dashboard, idx) {
-                    var tab = new ContentPane({
-                        id: this.id + dashboard.id,
-                        title: dashboard.id
-                    });
-                    this.tabConatiner.addChild(tab);
-
-                    var nodes = [];
-                    marshaller.gatherNodes(nodes);
-                    var edges = [];
-                    marshaller.gatherEdges(edges);
-                    this.initTab(tab, nodes, edges);
-                }, this);
+                var vertices = [];
+                marshaller.accept({
+                    visit: function (item) {
+                        if (item instanceof DataSource) {
+                            var params = "(";
+                            arrayUtil.forEach(item.filter, function (item, idx) {
+                                if (idx > 0) {
+                                    params += ", ";
+                                }
+                                params += item;
+                            });
+                            params += ")";
+                            vertices.push(lang.mixin({}, item, {
+                                label: item.id + params,
+                                __viz: {
+                                    icon: "\uf1c0"
+                                }
+                            }));
+                        } else if(item instanceof Output) {
+                            vertices.push(lang.mixin({}, item, {
+                                id: item.dataSource.id + "." + item.id,
+                                label: item.id,
+                                __viz: {
+                                    icon: "\uf0ce"
+                                }
+                            }));
+                        } else if (item instanceof Visualization) {
+                            vertices.push(lang.mixin({}, item, {
+                                label: item.id + "\n[" + item.type + "]",
+                                __viz: {
+                                    icon: "\uf080"
+                                }
+                            }));
+                        }
+                    }
+                });
+                var edges = [];
+                marshaller.accept({
+                    visit: function (item) {
+                        if (item instanceof DataSource) {
+                        } else if (item instanceof Output) {
+                            edges.push(lang.mixin({}, item, {
+                                id: item.dataSource.id + "-" + item.dataSource.id + "." + item.id,
+                                source: item.dataSource.id,
+                                target: item.dataSource.id + "." + item.id
+                            }));
+                        } else if (item instanceof Visualization) {
+                            if (lang.exists("source.id", item)) {
+                                edges.push({
+                                    id: item.source.id + "-" + item.source.output,
+                                    source: item.source.id + "." + item.source.output,
+                                    target: item.id,
+                                    __viz: {
+                                        footer: "circleFoot",
+                                        header: "circleHead"
+                                    }
+                                });
+                            }
+                            if (lang.exists("onSelect.updates.visualization", item)) {
+                                edges.push({
+                                    id: item.id + "-" + item.onSelect.updates.visualization,
+                                    source: item.id,
+                                    target: item.onSelect.updates.visualization,
+                                    label: "onSelect",
+                                    __viz: {
+                                        header: "arrowHead"
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+                this.graph
+                    .data({
+                        vertices: vertices,
+                        edges: edges,
+                        merge: true
+                    })
+                    .render()
+                ;
             }
         })
     });

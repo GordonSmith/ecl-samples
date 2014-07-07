@@ -1,195 +1,385 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["./IGraph", "d3",
-            "lib/graphlib/graphlib",
-            "lib/dagre/dagre"], factory);
+        define(["./D3Widget", "./IGraph", "./Entity", "./Edge", "./GraphData", "./GraphLayouts",
+            "lib/d3/d3"], factory);
     } else {
-        root.Graph = factory(root.IGraph, root.d3);
+        root.Graph = factory(root.D3Widget, root.IGraph, root.Entity, root.Edge, root.GraphData, root.GraphLayouts, root.d3);
     }
-}(this, function (IGraph, d3) {
-    function Graph(target, width, height) {
+}(this, function (D3Widget, IGraph, Entity, Edge, GraphData, GraphLayouts, d3) {
+    function Graph(target) {
+        D3Widget.call(this, target);
         IGraph.call(this);
 
-        this.version = "0.0.1";
+        this.graphData = new GraphData();
 
-        this.nodePadding = {
-            width: 16,
-            height: 8
-        };
-        this.width = width;
-        this.height = height;
-
-        this.graphData = new dagre.Digraph();
         var context = this;
+
+        //  Meta  ---
+        this.vertexPadding = {
+            width: 8,
+            height: 2
+        };
+        this.highlight = {
+            zoom: 1.1,
+            opacity: 0.33,
+            transition: 500
+        };
 
         //  Zoom  ---
         this.zoom = d3.behavior.zoom()
-            .scaleExtent([0.2, 2])
+            .scaleExtent([0.2, 4])
             .on("zoom", zoom)
         ;
+        var prevScale = 1;
         function zoom() {
-            context._addMarker(true); //  IE Bug Workaround  (Arrow Heads) ---
             context.svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+
+            //  IE Bug Workaround  (Arrow Heads) ---
+            if (prevScale !== d3.event.scale) {
+                context._fixIEMarkers();
+                prevScale = d3.event.scale;
+            }
         }
+        
+        //  Drag  ---
+        this.drag = d3.behavior.drag()
+            .origin(function(d) { 
+                return d; 
+            })
+            .on("dragstart", dragstart)
+            .on("dragend", dragend)
+            .on("drag", drag)
+        ;
+        function dragstart(d) {
+            var element = d3.select(this);
+            element.node().parentNode.appendChild(element.node());
+            context.svgE.selectAll(".edge")
+                .filter(function (e) { return e.source.id === d.id || e.target.id === d.id; })
+                .each(function (e) {
+                    context._pushMarkers(d3.select(this), e);
+                })
+            ;
+        }
+        function dragend(d) {
+            context.svgE.selectAll(".edge")
+                .filter(function (e) { return e.source.id === d.id || e.target.id === d.id; })
+                .each(function (e) {
+                    context._popMarkers(d3.select(this), e);
+                })
+            ;
+        }
+        function drag(d) {
+            d.px = d.x = d3.event.x;
+            d.py = d.y = d3.event.y;
+            context.renderVertex(d3.select(this), d);
+            context.svgE.selectAll(".edge")
+                .filter(function (e) { return e.source.id === d.id || e.target.id === d.id; })
+                .each(function (e) {
+                    context.renderEdge(d3.select(this), e);
+                })
+            ;
+        }
+        
+        //  Force  ---
+        this.force = d3.layout.force()
+            .charge(-800)
+            .linkDistance(300)
+            .size([this._size.width, this._size.height])
+            .on("start", function (d) { context._pushMarkers(); })
+            .on("end", function (d) { context._popMarkers(); })
+            .on("tick", function (d) {
+                context.svgV.selectAll(".vertex")
+                    .each(function (d) { context.renderVertex(d3.select(this), d); })
+                ;
+                context.svgE.selectAll(".edge")
+                    .each(function(d) { context.renderEdge(d3.select(this), d); })
+                ;
+            })
+        ;
 
         //  SVG  ---
-        this._svg = d3.select(target).append("svg")
-            .attr("width", this.width)
-            .attr("height", this.height)
-        ;
-        this._svg.append("rect")
+        this._svgZoom = this._svg.append("rect")
             .attr("class", "zoomLayer")
-            .attr("width", this.width)
-            .attr("height", this.height)
+            .attr("width", this._size.width)
+            .attr("height", this._size.height)
             .call(this.zoom)
         ;
 
         this.defs = this._svg.append("defs");
         this._addMarker();
         this.svg = this._svg.append("g");
+        this.svgE = this.svg.append("g");
+        this.svgV = this.svg.append("g");
     };
-    Graph.prototype = Object.create(IGraph.prototype);
+    Graph.prototype = Object.create(D3Widget.prototype);
+    Graph.prototype.implements(IGraph.prototype);
 
     Graph.prototype.resize = function (width, height) {
-        if (this.width != width || this.height != height) {
-            this.width = width;
-            this.height = height;
-
-            this._svg
-                .attr("width", this.width)
-                .attr("height", this.height)
+        if (D3Widget.prototype.resize.call(this, width, height)) {
+            this._svgZoom
+                .attr("width", this._size.width)
+                .attr("height", this._size.height)
             ;
         }
     };
 
-    Graph.prototype._update = function () {
-        this.layout = dagre.layout().run(this.graphData);
-        this._updateVertices();
-        this._updateEdges();
+    Graph.prototype.render = function () {
+        var context = this;
+        this.force.stop();
+        this.layout = null;
+
+        if (!this._data.merge) {
+            this.graphData = new GraphData();
+            this.renderAll();
+        }
+        var vertices = this._data.vertices.map(function (item) {
+            return (new Entity())
+                .class("vertexLabel")
+                .data(item)
+                .on("click", function (element, d) { context.vertex_click(element, d); })
+                .on("dblclick", function (element, d) { context.vertex_dblclick(element, d); })
+                .on("mouseover", function (element, d) { context.vertex_mouseover(element, d); })
+                .on("mouseout", function (element, d) { context.vertex_mouseout(element, d); })
+            ;
+        });
+        var edges = this._data.edges.map(function (item) {
+            return (new Edge())
+                .class("edge")
+                .data(item)
+            ;
+        });
+        var data = this.graphData.setData(vertices, edges, this._data.merge);
+        data.addedVertices.forEach(function (item) {
+            item.x = context._size.width / 2 + Math.random() * 10 / 2 - 5;
+            item.y = context._size.height / 2 + Math.random() * 10 / 2 - 5;
+        })
+
+        this.force
+            .nodes(this.graphData.nodeValues())
+            .links(this.graphData.edgeValues())
+        ;
+        this.renderAll();
+        this.doLayout(this.layoutMode);
     };
 
-    Graph.prototype._updateVertices = function () {
+    Graph.prototype.renderAll = function () {
+        this.renderVertices();
+        this.renderEdges();
+    };
+
+    Graph.prototype.renderVertices = function () {
         var context = this;
 
-        var svgNodes = this.svg
-            .selectAll(".node")
-            .data(this.graphData.nodes(), function (d) { return d; })
+        var svgNodes = this.svgV.selectAll(".vertex")
+            .data(this.graphData.nodeValues(), function (d) { return d.id; })
         ;
 
         //  Add new  ---
         var nodes = svgNodes.enter().append("g")
-            .attr("class", "node")
-            .each(init)
+            .attr("class", "vertex")
+            .call(this.drag)
+            .each(function (d) {
+                d.__entity
+                    .target(this)
+                    .render()
+                ;
+                d.width = d.__entity.width;
+                d.height = d.__entity.height;
+            })
         ;
-        function init(d) {
-            var obj = context.graphData.node(d);
-            var pos = context.layout.node(d);
-            var node = d3.select(this);
-            node.append("rect")
-                .attr("x", function (d) { return -pos.width / 2; })
-                .attr("y", function (d) { return -pos.height / 2; })
-                .attr("width", function (d) { return pos.width; })
-                .attr("height", function (d) { return pos.height; })
-            ;
-            context._appendLabel(node, obj.data.label);
-            return node;
-        }
 
         //  Update current  ---
-        svgNodes.each(updatePos);
-        function updatePos(d) {
-            var pos = context.layout.node(d);
-
-            return d3.select(this)
-                .attr("transform", function (d) { return "translate(" + pos.x + "," + pos.y + ")"; })
-            ;
-        };
+        svgNodes.each(function(d) {
+            context.renderVertex(d3.select(this), d);
+        });
 
         //  Remove old  ---
-        svgNodes.exit().remove();
+        svgNodes.exit().transition()
+            .style("opacity", "0")
+            .remove()
+        ;
     };
+    
+    Graph.prototype.renderVertex = function (element, d) {
+        if (this.layout) {
+            var pos = this.layout.node(d.id);
+            d.px = d.x = pos.x;
+            d.py = d.y = pos.y;
+            element = element.transition();
+        } else {
+            if (d.fixed) {
+                d.x = d.px;
+                d.y = d.py;
+            }
+            d.px = d.x;
+            d.py = d.y;
+        }
+        
+        return element
+            .attr("transform", function (d) { return "translate(" + [d.x, d.y] + ")"; })
+        ;            
+    };    
 
-    Graph.prototype._updateEdges = function () {
+    Graph.prototype.renderEdges = function () {
         var context = this;
-        this._addMarker(true); //  IE Bug Workaround  (Arrow Heads) ---
 
-        var svgEdgePaths = this.svg
-            .selectAll(".edge")
-            .data(this.graphData.edges(), function (e) { return e; })
+        var svgEdgePaths = this.svgE.selectAll(".edge")
+            .data(this.graphData.edgeValues(), function (e) { return e.id; })
         ;
 
         //  Add new  ---
         var edges = svgEdgePaths.enter().append("g")
             .attr("class", "edge")
-            .each(init)
+            .each(function (d) {
+                d.__edge
+                    .target(this)
+                ;
+                //var element = d3.select(this);
+                //var edge = new Edge(element, "vertexLabel", context.isIE);
+                //edge.setData(d.__data);
+            })
         ;
-        function init(d) {
-            var obj = context.graphData.edge(d);
-            var edge = d3.select(this);
-            var edgePath = edge.append("path");
-            if (obj.data.__viz.footer) {
-                edgePath.attr("marker-start", "url(#" + obj.data.__viz.footer + ")");
-            }
-            if (obj.data.__viz.header) {
-                edgePath.attr("marker-end", "url(#" + obj.data.__viz.header + ")");
-            }
+        function create(d) {
+//            var element = d3.select(this);
         }
 
         //  Update current  ---
-        svgEdgePaths.each(updatePos);
-        function updatePos(d) {
-            var pos = context.layout.edge(d);
-
-            function calculateEdgePoints(e) {
-                var value = context.layout.edge(e);
-                var source = context.layout.node(context.layout.incidentNodes(e)[0]);
-                var target = context.layout.node(context.layout.incidentNodes(e)[1]);
-                var points = value.points.slice();
-
-                var p0 = points.length === 0 ? target : points[0];
-                var p1 = points.length === 0 ? source : points[points.length - 1];
-
-                points.unshift(context._intersectRect(source, p0));
-                // TODO: use bpodgursky"s shortening algorithm here
-                points.push(context._intersectRect(target, p1));
-
-                return d3.svg.line()
-                  .x(function (d) { return d.x; })
-                  .y(function (d) { return d.y; })
-                  .interpolate("basis")
-                  //.tension(0.095)
-                  (points);
-            }
-
-            return d3.select(this).select("path")
-                .attr("d", function (d) { return calculateEdgePoints(d); })
-            ;
-        };
+        svgEdgePaths.each(function(d) {
+            context.renderEdge(d3.select(this), d);
+        });
 
         //  Remove old  ---
-        svgEdgePaths.exit().remove();
+        svgEdgePaths.exit().transition()
+            .style("opacity", "0")
+            .remove()
+        ;
+    };
+    
+    Graph.prototype.renderEdge = function(element, d) {
+        d.__edge.render(this.layout);
+        //element.call(this.Edge);
     };
 
-    Graph.prototype.setData = function (vertices, edges, append, pos) {
-        if (!append) {
-            this.graphData = new dagre.Digraph();
+    //  Layouts  ---
+    Graph.prototype.doLayout = function (mode) {
+        switch (mode) {
+            case "Circle":
+                this.layoutCircle();
+                break;
+            case "ForceDirected":
+                this.layoutForceDirected();
+                break;
+            case "ForceDirected2":
+                this.layoutForceDirected2();
+                break;
+            case "Hierarchy":
+                this.layoutHierarchy();
+                break;
+            default:
+                this.renderAll();
+                break;
         }
-        for (var i = 0; i < vertices.length; ++i) {
-            var item = vertices[i];
-            var pos = this._calcTextSize(item.label, "label");
-            this.graphData.addNode(item.id, {
-                data: item,
-                width: pos.w + this.nodePadding.width,
-                height: pos.h + this.nodePadding.height
-            });
+    };
+
+    Graph.prototype.layoutCircle = function () {
+        this.layoutMode = "Circle";
+        this.force.stop();
+        this.layout = new GraphLayouts.Circle(this.graphData, this._size.width, this._size.height);
+        this.renderAll();
+        this.layout = null;
+    };
+
+    Graph.prototype.layoutForceDirected = function () {
+        this.layoutMode = "ForceDirected";
+        this.layout = null;
+        this.force
+            .size([this._size.width, this._size.height])
+            .start()
+        ;
+    };
+
+    Graph.prototype.layoutForceDirected2 = function () {
+        this.layoutMode = "ForceDirected2";
+        this.force.stop();
+        this.layout = new GraphLayouts.ForceDirected(this.graphData, this._size.width, this._size.height);
+        this.renderAll();
+        this.layout = null;
+    };
+    
+    Graph.prototype.layoutHierarchy = function () {
+        this.layoutMode = "Hierarchy";
+        this.force.stop();
+        this.layout = new GraphLayouts.Hierarchy(this.graphData, this._size.width, this._size.height);
+        this.renderAll();
+        this.layout = null;
+    };
+
+    //  Highlighters  ---
+    Graph.prototype.highlightVertex = function (element, d) {
+        //  Causes issues in IE  ---
+        if (element && !this.isIE) {
+            element.node().parentNode.appendChild(element.node());
         }
-        for (var i = 0; i < edges.length; ++i) {
-            var item = edges[i];
-            this.graphData.addEdge(null, item.source, item.target, {
-                data: item
-            });
+
+        var zoomScale = this.zoom.scale();
+        if (zoomScale > 1)
+            zoomScale = 1;
+
+        var context = this;
+        var highlightVertices = {};
+        var highlightEdges = {};
+        if (d) {
+            var edges = this.graphData.incidentEdges(d.id);
+            for (var i = 0; i < edges.length; ++i) {
+                var edge = this.graphData.edge(edges[i]);
+                highlightEdges[edge.id] = true;
+                highlightVertices[edge.source.id] = true;
+                highlightVertices[edge.target.id] = true;
+            }
         }
-        this._update();
+
+        var vertexElements = this.svgV.selectAll(".vertex");
+        vertexElements.transition().duration(this.highlight.transition)
+            .style("opacity", function (o) {
+                if (!d || highlightVertices[o.id]) {
+                    return 1;
+                }
+                return context.highlight.opacity;
+            })
+        ;
+        vertexElements.select(".vertexLabelXXX").transition().duration(this.highlight.transition)
+            .attr("transform", function (o) {
+                if (d && highlightVertices[o.id]) {
+                    return "scale(" + context.highlight.zoom / zoomScale + ")";
+                }
+                return "scale(1)";
+            })
+        ;
+        d3.selectAll(".edge")
+            .classed("edge-active", function (o) {
+                return (d && highlightEdges[o.id]) ? true : false;
+            }).transition().duration(this.highlight.transition)
+            .style("opacity", function (o) {
+                if (!d || highlightEdges[o.id]) {
+                    return 1;
+                }
+                return context.highlight.opacity;
+            })
+        ;
+    };
+
+    //  Events  ---
+    Graph.prototype.vertex_click = function (element, d) {
+        IGraph.prototype.vertex_click.call(this, element, d);        
+        element.node().parentNode.appendChild(element.node());
+    };
+
+    Graph.prototype.vertex_mouseover = function (element, d) {
+        this.highlightVertex(element, d);
+    };
+
+    Graph.prototype.vertex_mouseout = function (d, self) {
+        this.highlightVertex(null, null);
     };
 
     Graph.prototype._addMarker = function (clearFirst) {
@@ -217,8 +407,8 @@
             .attr("viewBox", "0 0 10 10")
             .attr("refX", 1)
             .attr("refY", 5)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
+            .attr("markerWidth", 7)
+            .attr("markerHeight", 7)
             .attr("markerUnits", "strokeWidth")
             .attr("orient", "auto")
             .append("circle")
@@ -241,77 +431,6 @@
                 .attr("cy", 5)
                 .attr("r", 4)
         ;
-    },
-
-    Graph.prototype._calcTextSize = function (text, _class) {
-        var retVal = {
-            w: 0,
-            h: 0
-        };
-        var tmpNode = this.defs.append("g")
-            .attr("id", "calcTextSize")
-        ;
-
-        var label = this._appendLabel(tmpNode, text);
-        var bbox = label.node().getBBox();
-        retVal.w = bbox.width;
-        retVal.h = bbox.height;
-
-        this.defs.select("#calcTextSize").remove();
-        return retVal
-    },
-
-    Graph.prototype._appendLabel = function (node, label) {
-        var textNode = node.append("text")
-            .attr("class", "label")
-            .style("text-anchor", "middle")
-        ;
-        var textParts = label.split("\n");
-        for (var i = 0; i < textParts.length; ++i) {
-            textNode.append("tspan")
-                .attr("dy", "1em")
-                .attr("x", "1")
-                .text(textParts[i])
-            ;
-        }
-        var bbox = textNode.node().getBBox();
-        textNode
-            .attr("transform", function (d) { return "translate(0," + ((-bbox.height / 2) - 1) + ")"; })
-        ;
-        return textNode;
-    };
-
-    Graph.prototype._intersectRect = function (rect, point) {
-        var x = rect.x;
-        var y = rect.y;
-
-        // For now we only support rectangles
-
-        // Rectangle intersection algorithm from:
-        // http://math.stackexchange.com/questions/108113/find-edge-between-two-boxes
-        var dx = point.x - x;
-        var dy = point.y - y;
-        var w = rect.width / 2;
-        var h = rect.height / 2;
-
-        var sx, sy;
-        if (Math.abs(dy) * w > Math.abs(dx) * h) {
-            // Intersection is top or bottom of rect.
-            if (dy < 0) {
-                h = -h;
-            }
-            sx = dy === 0 ? 0 : h * dx / dy;
-            sy = h;
-        } else {
-            // Intersection is left or right of rect.
-            if (dx < 0) {
-                w = -w;
-            }
-            sx = w;
-            sy = dx === 0 ? 0 : w * dy / dx;
-        }
-
-        return { x: x + sx, y: y + sy };
     };
 
     return Graph;

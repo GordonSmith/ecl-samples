@@ -7,6 +7,9 @@ var dojoConfig = (function () {
         async: true,
         selectorEngine: "lite",
         packages: [{
+            name: "hpcc",
+            location: espUrl + "/eclwatch"
+        }, {
             name: "d3",
             location: espUrl + "/d3",
             main:"d3"

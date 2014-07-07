@@ -2,16 +2,25 @@
     <div id="${id}BorderContainer" style="width: 100%; height: 100%" data-dojo-props="design: 'headline'" data-dojo-type="dijit.layout.BorderContainer">
         <div id="${id}Heading" class="topPanel" data-dojo-props="region: 'top'" data-dojo-type="dijit.layout.ContentPane">
             <span id="${id}Title" style="font-weight: bold; font-size: x-large">Marshal Playground</span>
+            <div style="width:200px;height:200px" id="entity"></div>
+            <small style="float:right" class="dc-data-count">
+                <button data-dojo-attach-event="onClick:_onCircle" data-dojo-type="dijit.form.Button">Circle</button>
+                <button data-dojo-attach-event="onClick:_onForceDirected" data-dojo-type="dijit.form.Button">Spring</button>
+                <button data-dojo-attach-event="onClick:_onForceDirected2" data-dojo-type="dijit.form.Button">Spring 2</button>
+                <button data-dojo-attach-event="onClick:_onHierarchy" data-dojo-type="dijit.form.Button">Hierarchy</button>
+            </small>
         </div>
         <div id="${id}LHS" class="EdgeLeft" style="width: 30%;padding:0;overflow:hidden" data-dojo-props="region: 'left', splitter: true" data-dojo-type="dijit.layout.BorderContainer">
             <div id="${id}LHSCenter" style="padding:0;overflow:hidden" data-dojo-props="region: 'center', splitter: true" data-dojo-type="dijit.layout.ContentPane">
-                <textarea id="${id}MarshalJS" style="width:100%; height: 100%;border:none" data-dojo-attach-event="onChange:_onChangeJS" data-dojo-props="intermediateChanges:true" data-dojo-type="dijit.form.SimpleTextarea">[{"id":"Ins3","Visualizations":[{"id":"RecordDensity","onSelect":{"updates":{"visualization":"Donut1","instance":"Ins3","datasource":"stats"},"mappings":{"clean_st":"clean_st"}},"source":{"name":"stats","mappings":{"STATE":"clean_st","WEIGHT":"Cnt"},"output":"View_RecordDensity"},"COLOR":"Red-Yellow-Blue","type":"CHORO"},{"id":"Donut1","source":{"name":"stats","mappings":{"WEIGHT":"Cnt","LABEL":"clean_error"},"output":"View_Donut1"},"type":"PIE"},{"id":"ErrorDensity","source":{"name":"stats","mappings":{"STATE":"clean_st","WEIGHT":"Cnt"},"output":"View_ErrorDensity"},"COLOR":"Red-Yellow-Blue","type":"CHORO"},{"id":"ErrorTypes","onSelect":{"updates":{"visualization":"ErrorDensity","instance":"Ins3","datasource":"stats"},"mappings":{"clean_error":"clean_error"}},"source":{"name":"stats","mappings":{"WEIGHT":"Cnt","LABEL":"clean_error"},"output":"View_ErrorTypes"},"type":"PIE"}],"DataSources":[{"id":"stats","outputs":[{"id":"View_RecordDensity","notify":["RecordDensity"]},{"id":"View_Donut1","notify":["Donut1"]},{"id":"View_ErrorDensity","notify":["ErrorDensity"]},{"id":"View_ErrorTypes","notify":["ErrorTypes"]}],"URL":"_roxiebase_/stats_Service","filter":["clean_error","clean_st"]}]}]</textarea>
+                <textarea id="${id}MarshalJS" style="width:100%; height: 100%;border:none" data-dojo-attach-event="onChange:_onChangeJS" data-dojo-props="intermediateChanges:true" data-dojo-type="dijit.form.SimpleTextarea">[{"id":"Ins3","datasources":[{"id":"Ins3_stats","outputs":[{"id":"View_RecordDensity","notify":["RecordDensity"]},{"id":"View_Donut1","notify":["Donut1"]},{"id":"View_ErrorDensity","notify":["ErrorDensity"]},{"id":"View_ErrorTypes","notify":["ErrorTypes"]}],"URL":"__roxiebase__/stats_Service","filter":["clean_error","clean_st"]}],"visualizations":[{"id":"RecordDensity","onSelect":{"updates":{"visualization":"Donut1","instance":"Ins3","datasource":"Ins3_stats"},"mappings":{"clean_st":"clean_st"}},"source":{"id":"Ins3_stats","mappings":{"weight":"Cnt","state":"clean_st"},"output":"View_RecordDensity"},"color":"Red-Yellow-Blue","type":"CHORO"},{"id":"Donut1","source":{"id":"Ins3_stats","mappings":{"weight":"Cnt","label":"clean_error"},"output":"View_Donut1"},"type":"PIE"},{"id":"ErrorDensity","source":{"id":"Ins3_stats","mappings":{"weight":"Cnt","state":"clean_st"},"output":"View_ErrorDensity"},"color":"Red-Yellow-Blue","type":"CHORO"},{"id":"ErrorTypes","onSelect":{"updates":{"visualization":"ErrorDensity","instance":"Ins3","datasource":"Ins3_stats"},"mappings":{"clean_error":"clean_error"}},"source":{"id":"Ins3_stats","mappings":{"weight":"Cnt","label":"clean_error"},"output":"View_ErrorTypes"},"type":"PIE"}]}]</textarea>
             </div>
             <div id="${id}LHSFooter" style="height:80%;padding:1px;overflow:hidden" data-dojo-props="region: 'bottom', splitter: true" data-dojo-type="dijit.layout.ContentPane">
                 <textarea id="${id}MarshalPP" wrap="off" style="width:100%; height: 100%;border:none" data-dojo-attach-event="onChange:_onChangePP" data-dojo-type="dijit.form.SimpleTextarea"></textarea>
             </div>
         </div>
-        <div id="${id}Main" data-dojo-props="region: 'center'" data-dojo-type="dijit.layout.TabContainer">
+        <div id="${id}Center" data-dojo-props="region: 'center'" data-dojo-type="dijit.layout.BorderContainer">
+            <div id="${id}Main" data-dojo-props="region: 'center'" data-dojo-type="dijit.layout.ContentPane">
+            </div>
         </div>
     </div>
 </div>

@@ -2,45 +2,57 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="lib/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="css/test.css">
-    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src="js/SpringVizBase.js"></script>
-    <script src="js/SpringViz.js"></script>
+    <script src="lib/d3/d3.js"></script>
+    <script src="lib/graphlib/graphlib.js"></script>
+    <script src="lib/dagre/dagre.js"></script>
+    <script src="js/IGraph.js"></script>
+    <script src="js/GraphData.js"></script>
+    <script src="js/GraphLayouts.js"></script>
+    <script src="js/d3Ext.js"></script>
+    <script src="js/Graph.js"></script>
     <script>
+        var graph = null;
         function onLoad() {
             var vertices = [
-                { category: 0, id: 0, name: "Node 0" },
-                { category: 1, id: 1, name: "Node 1" },
-                { category: 1, id: 2, name: "Node 2" }
+                { id: 0, label: "Node 0", __viz: { icon: "\uf013" } },
+                { id: 1, label: "Node 1", __viz: { icon: "\uf05b" }  },
+                { id: 2, label: "Node 2", __viz: { icon: "\uf1b2" }  }
             ];
             var edges = [
-                { source: 0, target: 1, weight: 1 },
-                { source: 1, target: 2, weight: 1 },
-                { source: 2, target: 0, weight: 1 }
+                { source: 0, target: 1, weight: 1, __viz: { header: "arrowHead" } },
+                { source: 1, target: 2, weight: 1, __viz: { header: "arrowHead" }  },
+                { source: 2, target: 0, weight: 1, label: "I'm an edge\nlabel", __viz: { header: "arrowHead" }  }
             ];
-            var springViz = new SpringViz("#myBody", 500, 500);
-            springViz.setVertexMeta({
-                categoryIcon: [
-                    "img/people.svg",
-                    "img/people.svg",
-                    "img/people.svg"
-                ]
-            });
-            var uniqueID = vertices.length;
-            springViz.vertex_dblclick = function (vertex, self) {
-                setTimeout(function (id) {
-                    springViz.setData([
-                        { category: Math.floor((Math.random() * 3)), id: id, name: "Node " + uniqueID }
-                    ], [
-                        { source: vertex.id, target: id, weight: 1 },
-                        { source: id, target: Math.floor((Math.random() * id)), weight: 1 }
-                    ], true, vertex);
-                }, 800, uniqueID++);
+            graph = new Graph("#graph", 1024, 768);
+            var id = vertices.length;
+            graph.vertex_dblclick = function (element, d) {
+                var hex = 61506 + Math.floor(Math.random() * 292);
+                vertices.push({ 
+                    id: id, label: "Node " + id, __viz: { 
+                        icon: String.fromCharCode(hex)
+                    }
+                });
+                edges.push({ source: d.id, target: id, weight: 1, __viz: { header: "arrowHead" }  });
+                edges.push({ source: id, target: Math.floor((Math.random() * id)), weight: 1, __viz: { header: "arrowHead" }  });
+                graph.setData(vertices, edges, true);
+                ++id;
             };
-            springViz.setData(vertices, edges);
+
+            graph.doLayout("Hierarchy");
+            graph.setData(vertices, edges);
         };
     </script>
 </head>
-<body id="myBody" onload="onLoad()">
+<body onload="onLoad()">
+<div>
+<button onclick="graph.doLayout('Hierarchy')">Hierarchy</button>
+<button onclick="graph.doLayout('Circle')">Circle</button>
+<button onclick="graph.doLayout('ForceDirected2')">Force Directed</button>
+<button onclick="graph.doLayout('ForceDirected')">Spring</button>
+(Double click node to add more!!!)
+</div>
+<div id="graph"></div>
 </body>
 </html>

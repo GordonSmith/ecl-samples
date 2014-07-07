@@ -78,9 +78,7 @@ define([
             return ESPResource.callExt("roxie", "statesummary", {
                 stateid: ""
             }).then(function (response) {
-                //  HPCC-11455
-                //return ESPResource.arrayToMap(response.Result, "state");
-                return ESPResource.arrayToMap(response, "state");
+                return ESPResource.arrayToMap(response.Result, "state");
             });
         },
 
@@ -99,9 +97,7 @@ define([
                 ESPResource.callExt("roxie", "statesummary2", {
                     stateid: stateInfo.code
                 }).then(function (response) {
-                    //  HPCC-11455
-                    //context.barChart.render(response.Result);
-                    context.barChart.render(response);
+                    context.barChart.render(response.Result);
                 });
             } else {
                 this.barChart.render([]);
