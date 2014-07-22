@@ -34,6 +34,7 @@ html, body {
 
 .vertex {
     cursor: move;
+    font-size: 11px;
 }
 
 .vertexLabel rect {
@@ -42,13 +43,26 @@ html, body {
     stroke-width: 1.0px;
 }
 
-.vertexLabelShape {
+.vertexLabel .FAIcon {
+    font-size: 14px;
+}
+
+.vertexLabel .FAIconShape {
     fill: #1f77b4;
     stroke: none;
 }
 
-.vertexLabelIcon {
+.vertexLabel .FAIconIcon {
     fill: white;
+    stroke: none;
+}
+
+.vertexLabel .Indic .FAIcon {
+    font-size: 12px;
+}
+
+.vertexLabel .Indic .FAIconIcon {
+    fill: gray;
     stroke: none;
 }
 
@@ -70,12 +84,12 @@ html, body {
     stroke-width: 1.0px;
 }
 
-.edgeLabel rect {
+.edgePathLabel rect {
     fill: white;
     stroke: none;
 }
 
-.edgeLabel text {
+.edgePathLabel text {
     fill: black;
     stroke: none;
 }
@@ -83,4 +97,29 @@ html, body {
 .edge-active {
     stroke: black;
     stroke-width: 1.1px;
+}
+
+.vertexPie rect {
+    fill: #dcf1ff;
+    stroke: #1f77b4;
+    stroke-width: 1.0px;
+}
+
+.vertexPie path {
+    cursor: pointer;
+}
+
+.vertexChoro rect {
+    fill: #dcf1ff;
+    stroke: #1f77b4;
+    stroke-width: 1.0px;
+}
+
+.vertexChoro path {
+    cursor: pointer;
+    fill: whitesmoke;
+    stroke: #6d6e71;
+    stroke-width: 0.5px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
 }

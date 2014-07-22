@@ -1,6 +1,6 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["./Widget", "lib/d3/d3"], factory);
+        define(["./Widget", "d3/d3"], factory);
     } else {
         root.D3Widget = factory(root.Widget, root.d3);
     }
@@ -12,7 +12,10 @@
         this.height = 0;
         this._target = null;
         this._svg = null;
-        this._data = null;
+        this._data = [];
+
+        this._pos = { x: 0, y: 0 };
+        this._size = { width: 0, height: 0 };
 
         if (target) {
             this.target(target);
@@ -37,12 +40,29 @@
         return false;
     };
 
-    D3Widget.prototype.calcSize = function () {
-        var style = window.getComputedStyle(this._target, null);
-        return {
-            width: parseInt(style.getPropertyValue("width")),
-            height: parseInt(style.getPropertyValue("height"))
+    D3Widget.prototype.calcSize = function (domNode) {
+        domNode = domNode || this._target;
+        var retVal = {
+            width: 0,
+            height: 0
+        };
+        if (domNode instanceof SVGElement) {
+            var bbox = domNode.getBBox();
+            var bbox2 = domNode.getBoundingClientRect();
+            retVal.width = bbox.width;
+            retVal.height = bbox.height;
+        } else {
+            var style = window.getComputedStyle(domNode, null);
+            retVal.width = parseInt(style.getPropertyValue("width"));
+            retVal.height = parseInt(style.getPropertyValue("height"));
         }
+        return retVal;
+    };
+
+    D3Widget.prototype.pos = function (_) {
+        if (!arguments.length) return this._pos;
+        this._pos = _;
+        return this;
     };
 
     D3Widget.prototype.size = function (_) {
@@ -70,10 +90,46 @@
         return this;
     };
 
+    D3Widget.prototype.render = function () {
+        var context = this;
+        var elements = this._svg.selectAll("#" + this._id).data([this], function (d) { return d._id; });
+        elements.enter().append("g")
+            .attr("id", this._id)
+            .classed(this._class, true)
+            .each(function (d) {
+                context.enter(this, d3.select(this), d);
+                d.size(d.calcSize(this));
+            })
+        ;
+        elements
+            .each(function (d) {
+                context.update(this, d3.select(this), d);
+                d.size(d.calcSize(this));
+            })
+        ;
+        elements.exit()
+            .each(function exit(d) {
+                context.exit(this, d3.select(this), d);
+                d.size(d.calcSize(this));
+            })
+            .remove()
+        ;
+        return this;
+    };
+    D3Widget.prototype.enter = function (domeNode, element, d) { return element; };
+    D3Widget.prototype.update = function (domeNode, element, d) { return element; };
+    D3Widget.prototype.exit = function (domeNode, element, d) { return element; };
+
     //  Properties  ---
     D3Widget.prototype.class = function (_) {
         if (!arguments.length) return this._class;
         this._class = _;
+        return this;
+    };
+
+    D3Widget.prototype.id = function (_) {
+        if (!arguments.length) return this._id;
+        this._id = _;
         return this;
     };
 
@@ -86,6 +142,9 @@
     D3Widget.prototype.on = function (callbackID, callback) {
         this[callbackID] = callback;
         return this;
+    };
+
+    D3Widget.prototype.click = function (element, d) {
     };
 
     //  IE Helpers  ---    

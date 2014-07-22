@@ -1,6 +1,6 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["lib/d3/d3", "lib/dagre/dagre"], factory);
+        define(["d3/d3", "lib/dagre/dagre"], factory);
     } else {
         root.GraphLayouts = factory(root.d3);
     }
@@ -60,7 +60,19 @@
     };
 
     function Hierarchy(graphData, width, height) {
-        this.dagreLayout = dagre.layout().run(graphData);
+        graphData.eachNode(function (u) {
+            var value = graphData.node(u);
+            var size = value.__entity.textBox ? value.__entity.textBox.size() : value.__entity.size();
+            value.width = size.width;
+            value.height = size.height;
+        });
+        graphData.eachEdge(function (e) {
+            var value = graphData.edge(e);
+            value.minLen = value.__edge.__labelEntity ? 2 : 1;
+        });
+        this.dagreLayout = dagre.layout()
+            .run(graphData)
+        ;
         var deltaX = (width - this.dagreLayout._value.width) / 2;
         var deltaY = (height - this.dagreLayout._value.height) / 2;
         this.dagreLayout.eachNode(function (u, value) {

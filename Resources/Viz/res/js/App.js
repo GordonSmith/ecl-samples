@@ -158,7 +158,14 @@ define([
                         edges.push(item);
                     }
                 }
-                context.graph.setData(vertices, edges, append, pos);
+                context.graph
+                    .data({
+                        vertices: vertices,
+                        edges: edges,
+                        merge: true
+                    })
+                    .render()
+                ;
                 return response;
             });
         },
@@ -230,7 +237,7 @@ define([
 
         initCenter: function () {
             this.centerSize = this.getSize(this.widget.Main.domNode);
-            this.graph = new Graph("#" + this.id + "Main", this.centerSize.width, this.centerSize.height, has("ie") || has("trident"));
+            this.graph = new Graph(this.id + "Main", this.centerSize.width, this.centerSize.height, has("ie") || has("trident"));
             this.graph.layoutForceDirected2();
 
             var vertexMeta = {

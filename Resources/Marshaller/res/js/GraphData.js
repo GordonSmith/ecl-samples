@@ -21,15 +21,14 @@
         for (var i = 0; i < vertices.length; ++i) {
             var entity = vertices[i];
             var item = entity.data();
-            if (!merge || !this.hasNode(item.id)) {
+            if (!merge || !this.hasNode(entity._id)) {
                 try {
                     var newItem = {
-                        id: item.id,
+                        id: entity._id,
                         __entity: entity,
-                        //__data: item,
-                        __viz: item.__viz ? item.__viz : {}
+                        __viz: item && item.__viz ? item.__viz : {}
                     };
-                    this.addNode(item.id, newItem)
+                    this.addNode(entity._id, newItem)
                     retVal.addedVertices.push(newItem);
                 } catch (e) {
                     var d = 0;
@@ -49,7 +48,6 @@
                     this.addEdge(item.id, item.source, item.target, {
                         id: item.id,
                         __edge: edge,
-                        __data: item,
                         __viz: item.__viz ? item.__viz : {}
                     });
                 } catch (e) {
@@ -69,7 +67,7 @@
                     }
                 })
             ;
-            var vertexIDs = vertices.map(function (item) { return item.data().id; });
+            var vertexIDs = vertices.map(function (item) { return item._id; });
             this.filterNodes(function (item) { return vertexIDs.indexOf(item) < 0; }).nodes()
                 .forEach(function (item) {
                     try {

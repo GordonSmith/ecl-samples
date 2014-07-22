@@ -8,6 +8,7 @@
     function IGraph() {
     };
 
+    //  API  ---
     IGraph.prototype.target = function () {
         console.log("target");
     };
@@ -16,19 +17,15 @@
         console.log("render");
     };
 
+    //  {
+    //      vertices: [{ id: 007, label: "James Bond", __viz: { icons: "\uf013" } }],
+    //      edges: [{id: 007, source: 007, target: 007, __viz: {header: "arrowHead", footer: "circleFoot"}}],
+    //      merge:  true, false
+    //  }
     IGraph.prototype.data = function (data) {
         console.log("data");
     };
 
-
-    //  API  ---
-    //  vertices: [{id: 007, label: "James Bond", __viz: {icons: "\uf013"}}]
-    //  edges: [{id: 007, source: 007, target: 007, __viz: {header: "arrowHead", footer: "circleFoot"}}]
-    //  merge:  true, false
-    IGraph.prototype.setData = function (vertices, edges, merge) {
-        console.log("setData");
-    };
-    
     //  Mode:  Hierarchy, ForceDirected, , ForceDirected2, Circle
     IGraph.prototype.doLayout = function (mode) {
         console.log("doLayout");

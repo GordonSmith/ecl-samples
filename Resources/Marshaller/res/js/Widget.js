@@ -5,7 +5,9 @@
         root.Widget = factory();
     }
 }(this, function () {
+    var widgetID = 0;
     function Widget() {
+        this._id = "Widget" + widgetID++;
     };
 
     //  Instance Methods  ---

@@ -97,6 +97,26 @@ html, body, #AppBorderContainer {
     margin: 8px;
 }
 
+#AppMain {
+    overflow: hidden;
+}
+
+.zoomLayer {
+    fill: none;
+    stroke: red;
+    pointer-events: all;
+}
+
+.marker{
+    fill: #666;
+    stroke: none;
+    stroke-width: 1.0px;
+}
+
+.vertex {
+    cursor: move;
+}
+
 .vertexLabel rect {
     fill: #dcf1ff;
     stroke: #1f77b4;
@@ -111,4 +131,37 @@ html, body, #AppBorderContainer {
 .vertexLabelIcon {
     fill: white;
     stroke: none;
+}
+
+.vertexLabelUnpinned {
+    cursor: default;
+    fill: lightgray;
+    stroke: none;
+}
+
+.vertexLabelPinned {
+    cursor: default;
+    fill: #313131;
+    stroke: none;
+}
+
+.edge {
+    fill: none;
+    stroke: #666;
+    stroke-width: 1.0px;
+}
+
+.edgeLabel rect {
+    fill: white;
+    stroke: none;
+}
+
+.edgeLabel text {
+    fill: black;
+    stroke: none;
+}
+
+.edge-active {
+    stroke: black;
+    stroke-width: 1.1px;
 }

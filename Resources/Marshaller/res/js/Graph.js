@@ -1,11 +1,11 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["./D3Widget", "./IGraph", "./Entity", "./Edge", "./GraphData", "./GraphLayouts",
-            "lib/d3/d3"], factory);
+        define(["./D3Widget", "./IGraph", "./Entity", "./GraphData", "./GraphLayouts",
+            "d3/d3"], factory);
     } else {
-        root.Graph = factory(root.D3Widget, root.IGraph, root.Entity, root.Edge, root.GraphData, root.GraphLayouts, root.d3);
+        root.Graph = factory(root.D3Widget, root.IGraph, root.Entity, root.GraphData, root.GraphLayouts, root.d3);
     }
-}(this, function (D3Widget, IGraph, Entity, Edge, GraphData, GraphLayouts, d3) {
+}(this, function (D3Widget, IGraph, Entity, GraphData, GraphLayouts, d3) {
     function Graph(target) {
         D3Widget.call(this, target);
         IGraph.call(this);
@@ -15,10 +15,6 @@
         var context = this;
 
         //  Meta  ---
-        this.vertexPadding = {
-            width: 8,
-            height: 2
-        };
         this.highlight = {
             zoom: 1.1,
             opacity: 0.33,
@@ -51,8 +47,6 @@
             .on("drag", drag)
         ;
         function dragstart(d) {
-            var element = d3.select(this);
-            element.node().parentNode.appendChild(element.node());
             context.svgE.selectAll(".edge")
                 .filter(function (e) { return e.source.id === d.id || e.target.id === d.id; })
                 .each(function (e) {
@@ -69,6 +63,8 @@
             ;
         }
         function drag(d) {
+            var element = d3.select(this);
+            //element.node().parentNode.appendChild(element.node());
             d.px = d.x = d3.event.x;
             d.py = d.y = d3.event.y;
             context.renderVertex(d3.select(this), d);
@@ -133,18 +129,22 @@
             this.renderAll();
         }
         var vertices = this._data.vertices.map(function (item) {
-            return (new Entity())
+            return item;
+            return (new Entity.Vertex())
                 .class("vertexLabel")
                 .data(item)
-                .on("click", function (element, d) { context.vertex_click(element, d); })
-                .on("dblclick", function (element, d) { context.vertex_dblclick(element, d); })
-                .on("mouseover", function (element, d) { context.vertex_mouseover(element, d); })
-                .on("mouseout", function (element, d) { context.vertex_mouseout(element, d); })
+                .on("click", function (element, d) { context.vertex_click(d3.select(element.node().parentNode), d.data()); })
+                .on("dblclick", function (element, d) { context.vertex_dblclick(d3.select(element.node().parentNode), d.data()); })
+                .on("mouseover", function (element, d) {
+                    Entity.Vertex.prototype.mouseover.call(this, element, d);
+                    context.vertex_mouseover(d3.select(element.node().parentNode), d.data());
+                })
+                .on("mouseout", function (element, d) { context.vertex_mouseout(d3.select(element.node().parentNode), d.data()); })
             ;
         });
         var edges = this._data.edges.map(function (item) {
-            return (new Edge())
-                .class("edge")
+            return (new Entity.Edge())
+                .class("edgePath")
                 .data(item)
             ;
         });
@@ -183,8 +183,8 @@
                     .target(this)
                     .render()
                 ;
-                d.width = d.__entity.width;
-                d.height = d.__entity.height;
+                //d.width = d.__entity.width;//TODO Remove from here
+                //d.height = d.__entity.height;//TODO Remove from here
             })
         ;
 
@@ -228,35 +228,32 @@
         ;
 
         //  Add new  ---
-        var edges = svgEdgePaths.enter().append("g")
+        svgEdgePaths.enter().append("g")
             .attr("class", "edge")
-            .each(function (d) {
-                d.__edge
-                    .target(this)
-                ;
-                //var element = d3.select(this);
-                //var edge = new Edge(element, "vertexLabel", context.isIE);
-                //edge.setData(d.__data);
-            })
+            .each(create)
         ;
         function create(d) {
-//            var element = d3.select(this);
+            d.__edge
+                .target(this)
+                .render()
+            ;
         }
-
         //  Update current  ---
         svgEdgePaths.each(function(d) {
             context.renderEdge(d3.select(this), d);
         });
 
         //  Remove old  ---
-        svgEdgePaths.exit().transition()
-            .style("opacity", "0")
-            .remove()
+        svgEdgePaths.exit()
+           .remove()
         ;
     };
     
     Graph.prototype.renderEdge = function(element, d) {
-        d.__edge.render(this.layout);
+        d.__edge
+            .layout(this.layout)
+            .render()
+        ;
         //element.call(this.Edge);
     };
 
@@ -317,10 +314,6 @@
     //  Highlighters  ---
     Graph.prototype.highlightVertex = function (element, d) {
         //  Causes issues in IE  ---
-        if (element && !this.isIE) {
-            element.node().parentNode.appendChild(element.node());
-        }
-
         var zoomScale = this.zoom.scale();
         if (zoomScale > 1)
             zoomScale = 1;
@@ -340,6 +333,11 @@
 
         var vertexElements = this.svgV.selectAll(".vertex");
         vertexElements.transition().duration(this.highlight.transition)
+            .each("end", function (d) {
+                if (element) {
+                    element.node().parentNode.appendChild(element.node());
+                }
+            })
             .style("opacity", function (o) {
                 if (!d || highlightVertices[o.id]) {
                     return 1;
@@ -370,7 +368,7 @@
 
     //  Events  ---
     Graph.prototype.vertex_click = function (element, d) {
-        IGraph.prototype.vertex_click.call(this, element, d);        
+        IGraph.prototype.vertex_click.call(this, element, d);
         element.node().parentNode.appendChild(element.node());
     };
 
