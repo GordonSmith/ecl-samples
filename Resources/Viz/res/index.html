@@ -1,0 +1,122 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="js/Visualization/widgets/lib/requirejs/require.js"></script>
+    <script src="js/Visualization/widgets/config.js"></script>
+    <script>
+        requirejs.config({
+            baseUrl: "js/Visualization/widgets"
+        });
+    </script>
+</head>
+<body>
+    <div style="margin:auto;width:800px;height:600px">
+        <div id="yearDiv" style="width:100%; height:30%;">
+        </div>
+        <div id="quarterDiv" style="width:50%; height:30%; float:left;">
+        </div>
+        <div id="monthDiv" style="width:50%; height:30%; float:right;">
+        </div>
+        <div id="filteredDiv" style="clear:both;width:100%; height:30%">
+        </div>
+    </div>
+    <script>
+        require(["src/other/Comms", "src/chart/MultiChartSurface", "src/common/Surface", "src/chart/Line"], function (Comms, MultiChartSurface, Surface, Line) {
+            var selYear = "", selQuarter = "", selMonth = "";
+            var wuConn = new Comms.createESPConnection()
+                .mappings({
+                    "MonthSummary": { "monthid": "label", "tradetotal": "weight" },
+                    "QuarterSummary": { "quarterid": "label", "tradetotal": "weight" },
+                    "YearSummary": { "yearid": "label", "tradetotal": "weight" },
+                    "ndx": { "x": ["utcdate", "utcdate", "utcdate", "utcdate"], "y": ["open", "close", "low", "high"] }
+                })
+            ;
+            var yearChart = new MultiChartSurface()
+                .activate("BAR")
+                .target("yearDiv")
+                .title("Trades Per Year")
+                .render()
+            ;
+            yearChart.click = function (data) {
+                if (selYear === data.label) {
+                    selYear = "";
+                    selQuarter = "";
+                    selMonth = "";;
+                } else {
+                    selYear = data.label;
+                    selQuarter = "";
+                    selMonth = "";
+                }
+                refresh();
+            };
+
+            var quarterChart = new MultiChartSurface()
+                .activate("GOOGLE_PIE")
+                .target("quarterDiv")
+                .render()
+            ;
+            quarterChart.click = function (data) {
+                if (selQuarter === data.label) {
+                    selQuarter = "";
+                    selMonth = "";
+                } else {
+                    selQuarter = data.label;
+                    selMonth = "";
+                }
+                refresh();
+            };
+
+            var monthChart = new MultiChartSurface()
+                .activate("BAR")
+                .target("monthDiv")
+                .render()
+            ;
+            monthChart.click = function (data) {
+                if (selMonth === data.label) {
+                    selMonth = 0;
+                } else {
+                    selMonth = data.label;
+                }
+                refresh();
+            };
+
+            var lineChartSurface = new Surface()
+                .target("filteredDiv")
+                .content(new Line()
+                    .xScale("DATE"))
+                .render()
+            ;
+            var lineChart = lineChartSurface.content();
+
+            refresh();
+
+            function refresh() {
+                wuConn.call({ year: selYear, quarter: selQuarter, month: selMonth }, function (response) {
+                    yearChart
+                        .data(response.YearSummary)
+                        .render()
+                    ;
+                    quarterChart
+                        .data(response.QuarterSummary)
+                        .title("Trades Per Quarter (Year:" + selYear + ")")
+                        .render()
+                    ;
+                    monthChart
+                        .data(response.MonthSummary)
+                        .title("Trades Per Month (Year:  " + selYear + "  Quarter:  " + selQuarter + ")")
+                        .render()
+                    ;
+                    lineChart
+                        .data(response.ndx)
+                    ;
+                    lineChartSurface
+                        .title("Open/Close/High/Low (Year:  " + selYear + "  Quarter:  " + selQuarter + "  Month:  " + selMonth + ")")
+                        .render()
+                    ;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
